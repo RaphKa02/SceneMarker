@@ -1,0 +1,45 @@
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type WithoutChild<T> = T extends { child?: any } ? Omit<T, 'child'> : T;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type WithoutChildren<T> = T extends { children?: any } ? Omit<T, 'children'> : T;
+export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
+export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: U | null };
+
+export function formatTime(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+
+  if (h > 0) {
+    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+export function preventDefault(fn?: (event: MouseEvent) => void) {
+  return function (event: MouseEvent) {
+    event.preventDefault();
+    fn?.(event);
+  };
+}
+
+export function stopPropagation(fn?: (event: MouseEvent) => void) {
+  return function (event: MouseEvent) {
+    event.stopPropagation();
+    fn?.(event);
+  };
+}
+
+export function once(fn?: (event: MouseEvent) => void) {
+  return function (event: MouseEvent) {
+    fn?.(event);
+    fn = undefined;
+  };
+}

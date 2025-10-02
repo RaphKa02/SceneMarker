@@ -1,25 +1,38 @@
 <script lang="ts">
+  import { Button } from '$components/ui/button';
+  import Save from '@lucide/svelte/icons/save';
+
   interface Props {
     projectModified: boolean;
-    hasVideo: boolean;
+    hasProject: boolean;
+    projectName: string | null;
     onOpenVideo: () => void;
     onSaveProject: () => void;
+    onSaveProjectAt: () => void;
     onLoadProject: () => void;
   }
 
-  let { projectModified, hasVideo, onOpenVideo, onSaveProject, onLoadProject }: Props = $props();
+  let {
+    projectModified,
+    hasProject,
+    projectName,
+    onOpenVideo,
+    onSaveProject,
+    onSaveProjectAt,
+    onLoadProject,
+  }: Props = $props();
 </script>
 
-<div class="flex h-14 items-center gap-2 border-b border-gray-700 bg-gray-800 px-4">
+<div
+  class="border-border bg-background flex h-14 items-center gap-2 border-b px-4"
+  data-tauri-drag-region
+>
   <div class="mr-4 flex items-center gap-2">
     <div class="flex h-8 w-8 items-center justify-center rounded bg-blue-600 font-bold">SM</div>
     <h1 class="text-lg font-bold">SceneMarker</h1>
   </div>
 
-  <button
-    onclick={onOpenVideo}
-    class="flex items-center gap-2 rounded bg-gray-700 px-4 py-2 transition-colors hover:bg-gray-600"
-  >
+  <Button onclick={onOpenVideo} variant="outline" title="(Strg+Shift+O)">
     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path
         stroke-linecap="round"
@@ -29,12 +42,9 @@
       />
     </svg>
     Video öffnen
-  </button>
+  </Button>
 
-  <button
-    onclick={onLoadProject}
-    class="flex items-center gap-2 rounded bg-gray-700 px-4 py-2 transition-colors hover:bg-gray-600"
-  >
+  <Button onclick={onLoadProject} variant="outline" title="(Strg+O)">
     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path
         stroke-linecap="round"
@@ -44,17 +54,9 @@
       />
     </svg>
     Projekt laden
-  </button>
+  </Button>
 
-  <button
-    onclick={onSaveProject}
-    disabled={!hasVideo}
-    class="flex items-center gap-2 rounded px-4 py-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-    class:bg-green-600={projectModified}
-    class:hover:bg-green-700={projectModified}
-    class:bg-gray-700={!projectModified}
-    class:hover:bg-gray-600={!projectModified}
-  >
+  <Button onclick={onSaveProjectAt} variant="outline" disabled={!hasProject} title="(Strg+Shift+S)">
     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path
         stroke-linecap="round"
@@ -63,15 +65,22 @@
         d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
       />
     </svg>
-    Projekt speichern
-    {#if projectModified}
-      <span class="text-xs">●</span>
-    {/if}
-  </button>
+    Projekt speichern unter
+  </Button>
+  <Button
+    onclick={onSaveProject}
+    disabled={!projectModified}
+    variant={projectModified ? 'default' : 'outline'}
+    title="Speichern (Strg+S)"
+  >
+    <Save />
+  </Button>
 
-  <div class="flex-1"></div>
-
-  {#if hasVideo}
-    <div class="text-sm text-gray-400">Video geladen</div>
+  {#if projectName}
+    <div class="text-muted-foreground text-sm">
+      {projectName}
+    </div>
+  {:else if hasProject}
+    <div class="text-muted-foreground text-sm">Video geladen</div>
   {/if}
 </div>

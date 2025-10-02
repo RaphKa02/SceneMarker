@@ -1,25 +1,43 @@
 <script lang="ts">
+  import { Button } from '$components/ui/button';
+  import { formatTime } from '$utils';
   import { convertFileSrc } from '@tauri-apps/api/core';
-  import { onMount } from 'svelte';
+  import { toast } from 'svelte-sonner';
 
   interface Props {
-    videoPath: string;
+    videoPath?: string;
     currentTime: number;
-    onVideoElementReady: (element: HTMLVideoElement) => void;
+    onRelocateVideo?: () => void;
   }
 
-  let { videoPath, currentTime = $bindable(0), onVideoElementReady }: Props = $props();
+  let { videoPath, currentTime = $bindable(0), onRelocateVideo }: Props = $props();
 
   let videoElement = $state<HTMLVideoElement | null>(null);
+  let hasVideoError = $state(false);
+
   let isPlaying = $state(false);
   let duration = $state(0);
   let volume = $state(1);
   let isMuted = $state(false);
   let isFullscreen = $state(false);
 
-  onMount(() => {
-    if (videoElement) {
-      onVideoElementReady(videoElement);
+  let controllInterval = $state<number>();
+  let showControlls = $state(false);
+
+  const skipIntervals = [0.03, 1, 3, 5, 10, 60];
+
+  $effect(() => {
+    if (videoElement && videoPath) {
+      const convertedPath = convertFile(videoPath);
+      if (convertedPath) {
+        videoElement.src = convertedPath;
+      }
+    }
+  });
+
+  $effect(() => {
+    if (videoPath) {
+      hasVideoError = false;
     }
   });
 
@@ -29,10 +47,6 @@
     } else {
       videoElement?.play();
     }
-  }
-
-  function handleTimeUpdate() {
-    currentTime = videoElement?.currentTime ?? 0;
   }
 
   function handleLoadedMetadata() {
@@ -82,15 +96,19 @@
     }
   }
 
-  function formatTime(seconds: number): string {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor(seconds % 60);
+  function handleVideoClick() {
+    isPlaying ? videoElement?.pause() : videoElement?.play();
+    restartControllsInterval();
+  }
 
-    if (h > 0) {
-      return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    }
-    return `${m}:${s.toString().padStart(2, '0')}`;
+  function handleMouseEnter() {
+    restartControllsInterval();
+  }
+
+  function restartControllsInterval() {
+    showControlls = true;
+    clearInterval(controllInterval);
+    controllInterval = setInterval(() => (showControlls = false), 3000);
   }
 
   function convertFile(filePath: string) {
@@ -98,56 +116,66 @@
       return convertFileSrc(filePath);
     } catch (e) {
       console.error('Fehler bei convertFileSrc:', e);
+      toast.error('Fehler', {
+        description: JSON.stringify(e),
+        dismiss: false,
+        dismissable: true,
+      });
     }
   }
-
-  $effect(() => {
-    if (videoElement && videoPath) {
-      const convertedPath = convertFile(videoPath);
-      if (convertedPath) {
-        videoElement.src = convertedPath;
-        onVideoElementReady(videoElement);
-      }
-    }
-  });
 </script>
 
-<div class="flex flex-col overflow-hidden rounded-lg bg-black shadow-2xl">
-  {#if videoPath}
-    <div class="relative aspect-video bg-black">
-      <video
-        bind:this={videoElement}
-        class="h-full w-full"
-        ontimeupdate={handleTimeUpdate}
-        onloadedmetadata={handleLoadedMetadata}
-        onplay={handlePlay}
-        onpause={handlePause}
-        onerror={(e) => console.error('Video load error:', e)}
-      >
-        <track kind="captions" />
-      </video>
-    </div>
+<div class="relative flex flex-col overflow-hidden rounded-lg bg-black shadow-2xl">
+  {#if videoPath && !hasVideoError}
+    <video
+      bind:this={videoElement}
+      bind:currentTime
+      class="h-full w-full bg-black object-contain"
+      onloadedmetadata={handleLoadedMetadata}
+      onplay={handlePlay}
+      onpause={handlePause}
+      onerror={(e) => {
+        hasVideoError = true;
+        toast.error('Fehler', {
+          description: JSON.stringify(e),
+          dismiss: false,
+          dismissable: true,
+        });
+      }}
+      onclick={handleVideoClick}
+      onmouseenter={handleMouseEnter}
+    >
+      <track kind="captions" />
+    </video>
 
-    <div class="space-y-3 bg-gray-800 p-4">
+    <div
+      class={[
+        'bg-background absolute bottom-0 w-full space-y-3 p-4 opacity-0 transition-opacity hover:opacity-100',
+        showControlls && 'opacity-100',
+      ]}
+    >
       <!-- Zeitachse -->
       <div class="flex items-center gap-3">
-        <span class="w-16 text-right text-sm text-gray-400">{formatTime(currentTime)}</span>
+        <span class="text-muted-foreground w-16 text-right text-sm">{formatTime(currentTime)}</span>
         <input
           type="range"
           min="0"
           max={duration}
           value={currentTime}
           oninput={(e) => seekTo(parseFloat((e.target as HTMLInputElement).value))}
-          class="h-2 flex-1 cursor-pointer appearance-none rounded-lg bg-gray-700 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-600"
+          class="bg-input [&::-webkit-slider-thumb]:bg-primary h-2 flex-1 cursor-pointer appearance-none rounded-lg [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full"
         />
-        <span class="w-16 text-sm text-gray-400">{formatTime(duration)}</span>
+        <span class="text-muted-foreground w-16 text-sm">{formatTime(duration)}</span>
       </div>
 
       <!-- Kontrollleiste -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <!-- Play/Pause -->
-          <button onclick={togglePlay} class="rounded p-2 transition-colors hover:bg-gray-700">
+          <button
+            onclick={togglePlay}
+            class="hover:bg-input text-primary rounded p-2 transition-colors"
+          >
             {#if isPlaying}
               <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
@@ -161,64 +189,32 @@
 
           <!-- Sprung-Buttons -->
           <div class="flex gap-1">
-            <button
-              onclick={() => skip(-60)}
-              class="rounded px-2 py-1 text-xs transition-colors hover:bg-gray-700">-60s</button
-            >
-            <button
-              onclick={() => skip(-10)}
-              class="rounded px-2 py-1 text-xs transition-colors hover:bg-gray-700">-10s</button
-            >
-            <button
-              onclick={() => skip(-5)}
-              class="rounded px-2 py-1 text-xs transition-colors hover:bg-gray-700">-5s</button
-            >
-            <button
-              onclick={() => skip(-3)}
-              class="rounded px-2 py-1 text-xs transition-colors hover:bg-gray-700">-3s</button
-            >
-            <button
-              onclick={() => skip(-1)}
-              class="rounded px-2 py-1 text-xs transition-colors hover:bg-gray-700">-1s</button
-            >
-            <button
-              onclick={() => skip(-0.03)}
-              class="rounded px-2 py-1 text-xs transition-colors hover:bg-gray-700">-1FR</button
-            >
+            {#each skipIntervals.toReversed() as interval (interval)}
+              <button
+                onclick={() => skip(-interval)}
+                class="hover:bg-input rounded px-2 py-1 text-xs transition-colors"
+              >
+                -{interval < 1 ? '1FR' : interval + 's'}
+              </button>
+            {/each}
 
-            <div class="mx-1 w-px bg-gray-600"></div>
+            <div class="bg-border mx-1 w-px"></div>
 
-            <button
-              onclick={() => skip(0.03)}
-              class="rounded px-2 py-1 text-xs transition-colors hover:bg-gray-700">+1FR</button
-            >
-            <button
-              onclick={() => skip(1)}
-              class="rounded px-2 py-1 text-xs transition-colors hover:bg-gray-700">+1s</button
-            >
-            <button
-              onclick={() => skip(3)}
-              class="rounded px-2 py-1 text-xs transition-colors hover:bg-gray-700">+3s</button
-            >
-            <button
-              onclick={() => skip(5)}
-              class="rounded px-2 py-1 text-xs transition-colors hover:bg-gray-700">+5s</button
-            >
-            <button
-              onclick={() => skip(10)}
-              class="rounded px-2 py-1 text-xs transition-colors hover:bg-gray-700">+10s</button
-            >
-            <button
-              onclick={() => skip(60)}
-              class="rounded px-2 py-1 text-xs transition-colors hover:bg-gray-700">+60s</button
-            >
+            {#each skipIntervals as interval (interval)}
+              <button
+                onclick={() => skip(interval)}
+                class="hover:bg-input rounded px-2 py-1 text-xs transition-colors"
+              >
+                {interval < 1 ? '1FR' : interval + 's'}
+              </button>
+            {/each}
           </div>
         </div>
 
         <div class="flex items-center gap-3">
           <!-- Lautstärke -->
           <div class="flex items-center gap-2">
-            <button onclick={toggleMute} class="rounded p-2 transition-colors hover:bg-gray-700">
+            <button onclick={toggleMute} class="hover:bg-input rounded p-2 transition-colors">
               {#if isMuted || volume === 0}
                 <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                   <path
@@ -244,13 +240,13 @@
               step="0.01"
               bind:value={volume}
               oninput={handleVolumeChange}
-              class="h-2 w-20 cursor-pointer appearance-none rounded-lg bg-gray-700 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-600"
+              class="bg-input [&::-webkit-slider-thumb]:bg-primary h-2 w-20 cursor-pointer appearance-none rounded-lg [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full"
             />
           </div>
 
           <button
             onclick={toggleFullscreen}
-            class="rounded p-2 transition-colors hover:bg-gray-700"
+            class="hover:bg-input rounded p-2 transition-colors"
             aria-label="fullscreen"
           >
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -265,9 +261,45 @@
         </div>
       </div>
     </div>
+  {:else if hasVideoError}
+    <div class="bg-background flex aspect-video items-center justify-center">
+      <div class="text-muted-foreground px-8 text-center">
+        <svg
+          class="text-destructive mx-auto mb-4 h-20 w-20"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+          />
+        </svg>
+        <p class="mb-2 text-lg font-semibold">Video konnte nicht geladen werden</p>
+        <p class="mb-6 text-sm">Die Datei wurde möglicherweise verschoben oder gelöscht</p>
+        <Button
+          onclick={() => {
+            onRelocateVideo?.();
+          }}
+          class="bg-primary text-primary-foreground hover:bg-primary mx-auto flex cursor-pointer items-center gap-2 rounded-lg px-6 py-3 font-semibold transition-colors"
+        >
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          Video neu verknüpfen
+        </Button>
+      </div>
+    </div>
   {:else}
-    <div class="flex aspect-video items-center justify-center bg-gray-800">
-      <div class="text-center text-gray-400">
+    <div class="bg-background flex aspect-video items-center justify-center">
+      <div class="text-muted-foreground text-center">
         <svg
           class="mx-auto mb-4 h-24 w-24 opacity-50"
           fill="none"
