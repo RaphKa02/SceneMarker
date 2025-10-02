@@ -1,117 +1,134 @@
-# SceneMarker - Requirements
+# 🎬 SceneMarker
 
-## 1. Ziel
+![Version](https://img.shields.io/badge/version-0.1.0-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Platform](https://img.shields.io/badge/platform-Windows-blue)
 
-Entwicklung einer **lokalen Desktop-Anwendung** für Windows, mit der ein Handballtrainer heruntergeladene Spielvideos abspielen und analysieren kann. Die Anwendung ermöglicht es, **Szenen zu markieren, zu benennen, zu gruppieren und direkt per Klick anzusteuern**. Ziel ist ein **einfach zu bedienendes, modernes Interface**, das auf Laptops im Training genutzt werden kann.
+> **Professionelle Video-Analyse für Handballtrainer**
 
-## 2. Hauptfunktionen
+Eine moderne Desktop-Anwendung zur Markierung und Verwaltung von Spielszenen in Trainingsvideos. Entwickelt für Windows mit Tauri 2, Svelte 5 und Tailwind CSS.
 
-### 2.1 Videoverwaltung
+---
 
-- Nutzer kann über einen **Dateidialog** ein lokales Videofile (z. B. MP4) auswählen und laden.
-- Das Video wird im **zentralen Player-Bereich** angezeigt.
-- Es können mehrere Projekte gespeichert/geladen werden (Projektdatei enthält: Videopfad + Szenenliste).
+## ✨ Features
 
-### 2.2 Video-Playback
+### 🎥 Video-Verwaltung
+- Unterstützung für MP4, MKV, AVI, MOV und WebM
+- Flüssige Wiedergabe mit nativen HTML5 Video-Element
+- Präzise Zeitsteuerung und Sprungfunktionen
+- Fullscreen-Modus für Präsentationen
 
-- Klassische **Kontrollleiste unter dem Video**:
-  - Play / Pause
-  - Zeitachse (Playhead, scrubbable)
-  - Aktuelle Zeit / Gesamtdauer Anzeige
+### 📍 Szenenmanagement
+- Szenen mit Zeitstempel und Titel markieren
+- Szenen in Kategorien organisieren (z.B. Angriff, Abwehr) (bald)
+- Drag & Drop zum Umorganisieren (bald)
+- Direkte Sprungmarken zu jeder Szene
+- Suchfunktion für schnellen Zugriff
 
-- **Sprung-Buttons**: vor/zurück um 1, 3, 5, 10, 60 Sekunden.
-- Lautstärkeregelung + Mute.
-- Optional: Fullscreen-Modus.
+### 💾 Projekt-Speicherung
+- JSON-basierte Projektdateien (.smp)
+- Automatische Änderungserkennung
+- Schnellspeichern mit Strg+S
 
-### 2.3 Szenenmanagement
+### ⌨️ Tastenkürzel
+| Kürzel | Funktion |
+|--------|----------|
+| `Strg + S` | Schnellspeichern |
+| `Strg + Shift + S` | Speichern unter |
+| `Strg + O` | Projekt öffnen |
+| `Strg + Shift + O` | Video öffnen |
+| `Leertaste` | Play/Pause |
+| `←` / `→` | ±5 Sekunden |
 
-- **Szenen hinzufügen**:
-  - Button „Szene speichern“ → aktuelle Videoposition wird mit Titel gespeichert.
-  - Titel-Eingabe über Dialog oder Inline-Edit.
+---
 
-- **Szenen bearbeiten**:
-  - Titel ändern.
-  - Startzeit anpassen (z. B. durch Übernehmen der aktuellen Videoposition).
+## 🚀 Installation
 
-- **Szenen löschen**: Eintrag in der Liste entfernen.
-- **Szenenliste in Sidebar**:
-  - Rechts neben dem Video.
-  - Jede Szene als klickbarer Button (Titel + Zeitcode).
-  - Klick → Video springt direkt zu dieser Position.
+### Voraussetzungen
 
-- Szenenliste scrollbar, mit Suchfeld und optionalen Kategorien/Ordnern.
+- **Node.js** (v18 oder höher)
+- **Rust** (v1.70 oder höher)
+- **Windows 10/11**
 
-### 2.4 Speicherung
+### Setup
 
-- Szenen werden in einer **Projektdatei (JSON)** gespeichert.
-- Beispiel:
+```bash
+# Repository klonen
+git clone https://gitlab.karl-raphael.de/raphael/scene-marker.git
+cd scene-marker
 
-```json
-{
-  "videoPath": "C:/Videos/spiel1.mp4",
-  "scenes": [
-    { "title": "Anwurf", "time": 0 },
-    { "title": "Gegenstoß 1. Halbzeit", "time": 120 }
-  ]
-}
+# Dependencies installieren
+pnpm install
+
+# Entwicklungsserver starten
+pnpm run tauri dev
 ```
 
-- Laden & Speichern von Projekten über Menü.
+### Build
 
-## 3. Benutzeroberfläche
+```bash
+# Production Build erstellen
+pnpm run tauri build
 
-### 3.1 Layout
+# Ausgabe: src-tauri/target/release/scene-marker.exe
+```
 
-- **Flex-Layout (Tailwind CSS)**
-  - Linke Seite: Videoplayer (groß, responsive, mit Kontrollleiste unten).
-  - Rechte Seite: Sidebar mit Szenenliste, Kategorien, Buttons.
+---
 
-- Dunkles UI (Dark Mode by default).
-- Abgerundete Kanten, sanfte Schatten, moderne Buttons.
+## 📖 Verwendung
 
-### 3.2 Bedienung
+### 1. Video laden
+- Klicke auf **"Video öffnen"** oder drücke `Strg + Shift + O`
+- Wähle eine lokale Videodatei aus
 
-- Hauptnavigation minimal (nur „Video öffnen“, „Projekt speichern“, „Projekt laden“).
-- Fokussiert auf **große Videofläche** + **einfache Szenensteuerung**.
+### 2. Szenen markieren
+- Navigiere zur gewünschten Position im Video
+- Klicke auf **"Szene speichern"**
+- Benenne die Szene um (optional)
 
-## 4. Technische Anforderungen
+### 3. Szenen organisieren
+- Ziehe Szenen per Drag & Drop in Kategorien
+- Nutze die Suchfunktion zum Filtern
+- Klicke auf eine Szene, um direkt dorthin zu springen
 
-### 4.1 Frameworks
+### 4. Projekt speichern
+- `Strg + S` für Schnellspeichern
+- `Strg + Shift + S` für "Speichern unter"
+- Projektdateien haben die Endung `.smp`
 
-- **UI:** [Svelte 5](https://svelte.dev/) (TypeScript) + [Tailwind CSS](https://tailwindcss.com/) für Styling.
-- **Desktop:** [Tauri 2](https://v2.tauri.app/) als Container, offline unter Windows.
-- **Build & Dev:** [Vite](https://vitejs.dev/) als Bundler/Dev-Server.
+---
 
-### 4.2 Video-Handling
+## 🏗️ Technologie-Stack
 
-- Nutzung des nativen `<video>`-Elements (Chromium in Electron).
-- Unterstützt MP4 (H.264) als Standardformat.
-- Direktes Springen via `video.currentTime`.
-- Performance: flüssige Sprünge (Keyframe-optimiertes Video empfohlen).
+| Technologie | Version | Verwendung |
+|-------------|---------|------------|
+| [Tauri 2](https://v2.tauri.app/) | 2.0 | Desktop-Framework |
+| [Svelte 5](https://svelte.dev/) | 5.0 | Frontend-Framework |
+| [TypeScript](https://www.typescriptlang.org/) | 5.3 | Type Safety |
+| [Tailwind CSS](https://tailwindcss.com/) | 3.4 | Styling |
+| [Vite](https://vitejs.dev/) | 5.0 | Build Tool |
+| [Rust](https://www.rust-lang.org/) | 1.70+ | Backend |
 
-### 4.3 Dateiverwaltung
+---
 
-- Dateidialog via Tauri.
-- Projekt-Speicherung als JSON auf dem Dateisystem.
-- Persistenz zwischen Sessions (letztes Projekt wird automatisch geladen).
+## 📝 Lizenz
 
-## 5. Erweiterungen (optional)
+Dieses Projekt ist unter der MIT Lizenz lizenziert.
 
-- Kategorien / Ordner für Szenen (z. B. Angriff, Abwehr, Umschalten).
-- Exportfunktion für Clips (via FFMPEG).
-- Multi-Video Projekte (z. B. Hin- und Rückspiel).
-- Hotkeys:
-  - Space = Play/Pause
-  - Pfeiltasten = ±5s
-  - Customizable Shortcuts.
+---
 
-## 6. Nicht-Funktionen
+## 👤 Autor
 
-- Keine Cloud / kein Online-Upload.
-- Keine komplexe Videoanalyse (z. B. Zeichnen, Tracking).
-- Keine Streaming-Unterstützung (nur lokale Files).
+Entwickelt für Handballtrainer zur effizienten Videoanalyse im Training.
 
-## 7. Zielumgebung
+---
 
-- **Windows 10/11 Laptop**, mind. 8 GB RAM.
-- Lokale Videos (MP4, max. 1080p empfohlen).
+## 🙏 Danksagungen
+
+- [Tauri Team](https://tauri.app/) für das fantastische Framework
+- [Svelte Team](https://svelte.dev/) für das reaktive UI-Framework
+- [Tailwind Labs](https://tailwindcss.com/) für das Utility-First CSS Framework
+
+---
+
+**⭐ Gefällt dir das Projekt? Gib ihm einen Star!**
