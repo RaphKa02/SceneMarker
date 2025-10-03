@@ -1,12 +1,14 @@
 {
   "name": "scene-marker",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "",
   "type": "module",
+  "private": true,
   "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
-    "preview": "vite preview",
+    "dev": "node scripts/buildNumber.cjs alpha true && vite dev",
+    "build": "node scripts/buildNumber.cjs release false && vite build",
+    "build:alpha": "node scripts/buildNumber.cjs alpha false && vite build",
+    "rename": "node scripts/rename.js",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "format": "prettier --write .",
@@ -19,6 +21,9 @@
     "@tauri-apps/plugin-dialog": "~2",
     "@tauri-apps/plugin-fs": "~2.4.2",
     "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-os": "~2.3.1",
+    "@tauri-apps/plugin-process": "~2.3.0",
+    "@tauri-apps/plugin-updater": "~2.9.0",
     "svelte-dnd-action": "^0.9.65"
   },
   "devDependencies": {

@@ -1,19 +1,21 @@
 <script lang="ts">
+  import { Button } from '$components/ui/button';
+  import UpdateAlert from '$components/UpdateAlert.svelte';
   import SceneList from '$lib/SceneList.svelte';
+  import { appState } from '$lib/state';
   import TopBar from '$lib/TopBar.svelte';
   import VideoPlayer from '$lib/VideoPlayer.svelte';
+  import Eye from '@lucide/svelte/icons/eye';
   import Minus from '@lucide/svelte/icons/minus';
   import Square from '@lucide/svelte/icons/square';
   import X from '@lucide/svelte/icons/x';
+  import { listen } from '@tauri-apps/api/event';
+  import { getCurrentWindow } from '@tauri-apps/api/window';
   import { ask, open, save } from '@tauri-apps/plugin-dialog';
   import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
-  import type { Project, Scene } from './types';
-
-  import { Button } from '$components/ui/button';
-  import Eye from '@lucide/svelte/icons/eye';
-  import { getCurrentWindow } from '@tauri-apps/api/window';
   import { onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
+  import type { Project, Scene } from './types';
 
   let currentProject = $state<Project>();
   let projectModified = $state(false);
@@ -21,6 +23,17 @@
   let sidebarWidth = $state(320);
   let sidebarVisible = $state(true);
   let isResizing = $state(false);
+
+  onMount(() => {
+    const unlisten = listen('file-opened', (event) => {
+      const filePath = event.payload as string;
+      console.log('Datei geöffnet:', filePath);
+
+      loadProjectFromPath(filePath);
+    });
+
+    return async () => (await unlisten)();
+  });
 
   onMount(() => {
     const unlisten = getCurrentWindow().onCloseRequested(async (event) => {
@@ -38,61 +51,36 @@
     return async () => (await unlisten)();
   });
 
-  onMount(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      // Ignore shortcuts when typing in input fields
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-
-      // Ctrl+S - Quick save
-      if (e.ctrlKey && e.key === 's' && !e.shiftKey) {
-        e.preventDefault();
-        saveProject();
-      }
-
-      // Ctrl+Shift+S - Save as
-      if (e.ctrlKey && e.shiftKey && e.key === 'S') {
-        e.preventDefault();
-        saveProjectAt();
-      }
-
-      // Ctrl+O - Open project
-      if (e.ctrlKey && e.key === 'o' && !e.shiftKey) {
-        e.preventDefault();
-        loadProject();
-      }
-
-      // Ctrl+Shift+O - Open video
-      if (e.ctrlKey && e.shiftKey && e.key === 'O') {
-        e.preventDefault();
-        openVideoDialog();
-      }
-
-      // // Space - Play/Pause
-      // if (e.key === ' ' && videoElement) {
-      //   e.preventDefault();
-      //   togglePlayPause();
-      // }
-
-      // // Arrow keys - Skip ±5s
-      // if (e.key === 'ArrowLeft' && videoElement) {
-      //   e.preventDefault();
-      //   skipVideo(-5);
-      // }
-
-      // if (e.key === 'ArrowRight' && videoElement) {
-      //   e.preventDefault();
-      //   skipVideo(5);
-      // }
+  function handleKeyDown(e: KeyboardEvent) {
+    // Ignore shortcuts when typing in input fields
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      return;
     }
 
-    window.addEventListener('keydown', handleKeyDown);
+    // Ctrl+S - Quick save
+    if (e.ctrlKey && e.key === 's' && !e.shiftKey) {
+      e.preventDefault();
+      saveProject();
+    }
 
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  });
+    // Ctrl+Shift+S - Save as
+    if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+      e.preventDefault();
+      saveProjectAt();
+    }
+
+    // Ctrl+O - Open project
+    if (e.ctrlKey && e.key === 'o' && !e.shiftKey) {
+      e.preventDefault();
+      loadProject();
+    }
+
+    // Ctrl+Shift+O - Open video
+    if (e.ctrlKey && e.shiftKey && e.key === 'O') {
+      e.preventDefault();
+      openVideoDialog();
+    }
+  }
 
   async function openVideoDialog(reset = true) {
     try {
@@ -140,6 +128,7 @@
     if (!currentProject) return;
 
     const savePath = await save({
+      defaultPath: currentProject.videoPath,
       filters: [
         {
           name: 'SceneMarker Project',
@@ -155,23 +144,26 @@
   }
 
   async function loadProject() {
-    try {
-      const selected = await open({
-        multiple: false,
-        filters: [
-          {
-            name: 'SceneMarker Project',
-            extensions: ['smp'],
-          },
-        ],
-      });
+    const selected = await open({
+      multiple: false,
+      filters: [
+        {
+          name: 'SceneMarker Project',
+          extensions: ['smp'],
+        },
+      ],
+    });
+    if (selected) {
+      loadProjectFromPath(selected);
+    }
+  }
 
-      if (selected) {
-        const content = await readTextFile(selected as string);
-        const project: Project = JSON.parse(content);
-        currentProject = project;
-        projectModified = false;
-      }
+  async function loadProjectFromPath(path: string) {
+    try {
+      const content = await readTextFile(path);
+      const project: Project = JSON.parse(content);
+      currentProject = project;
+      projectModified = false;
     } catch (err) {
       console.error('Fehler beim Laden:', err);
       toast.error('Fehler beim Öffnen', {
@@ -253,7 +245,14 @@
   }
 </script>
 
-<svelte:window onbeforeunload={(e) => projectModified && e.preventDefault()} />
+<svelte:window
+  onbeforeunload={(e) => projectModified && e.preventDefault()}
+  onkeydown={handleKeyDown}
+/>
+
+{#if $appState.updateAvailable}
+  <UpdateAlert />
+{/if}
 
 <div class="fixed top-0 right-0 flex gap-2 p-2">
   <Button
@@ -342,21 +341,6 @@
         <Eye />
       </Button>
     {/if}
-  </div>
-</div>
-
-<!-- Keyboard shortcuts hint -->
-<div
-  class="fixed right-4 bottom-4 max-w-xs rounded-lg border border-gray-700 bg-gray-800 p-3 text-xs text-gray-400 opacity-0 transition-opacity hover:opacity-100"
->
-  <div class="mb-2 font-semibold">Tastenkürzel</div>
-  <div class="space-y-1">
-    <div><kbd class="rounded bg-gray-700 px-1 py-0.5">Strg+S</kbd> Speichern</div>
-    <div><kbd class="rounded bg-gray-700 px-1 py-0.5">Strg+Shift+S</kbd> Speichern unter</div>
-    <div><kbd class="rounded bg-gray-700 px-1 py-0.5">Strg+O</kbd> Projekt öffnen</div>
-    <div><kbd class="rounded bg-gray-700 px-1 py-0.5">Strg+Shift+O</kbd> Video öffnen</div>
-    <div><kbd class="rounded bg-gray-700 px-1 py-0.5">Leertaste</kbd> Play/Pause</div>
-    <div><kbd class="rounded bg-gray-700 px-1 py-0.5">←/→</kbd> ±5 Sekunden</div>
   </div>
 </div>
 

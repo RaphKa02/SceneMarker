@@ -11,3 +11,9 @@ export interface Project {
   scenes: Scene[];
   currentTime: number;
 }
+
+export interface LibState {
+  version: string;
+  updateAvailable: boolean;
+  showUpdatePopup: boolean;
+}

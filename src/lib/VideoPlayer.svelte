@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Button } from '$components/ui/button';
+  import logger from '$lib/logger';
   import { formatTime } from '$utils';
   import { convertFileSrc } from '@tauri-apps/api/core';
   import { toast } from 'svelte-sonner';
@@ -115,7 +116,7 @@
     try {
       return convertFileSrc(filePath);
     } catch (e) {
-      console.error('Fehler bei convertFileSrc:', e);
+      logger.error(`Fehler bei convertFileSrc: ${e}`);
       toast.error('Fehler', {
         description: JSON.stringify(e),
         dismiss: false,
@@ -123,7 +124,33 @@
       });
     }
   }
+
+  function handleKeyDown(e: KeyboardEvent) {
+    // Ignore shortcuts when typing in input fields
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      return;
+    }
+
+    // Space - Play/Pause
+    if (e.key === ' ' && videoElement) {
+      e.preventDefault();
+      isPlaying ? videoElement?.pause() : videoElement?.play();
+    }
+
+    // Arrow keys - Skip ±5s
+    if (e.key === 'ArrowLeft' && videoElement) {
+      e.preventDefault();
+      skip(-5);
+    }
+
+    if (e.key === 'ArrowRight' && videoElement) {
+      e.preventDefault();
+      skip(5);
+    }
+  }
 </script>
+
+<svelte:window onkeydown={handleKeyDown} />
 
 <div class="relative flex flex-col overflow-hidden rounded-lg bg-black shadow-2xl">
   {#if videoPath && !hasVideoError}
@@ -314,7 +341,7 @@
           />
         </svg>
         <p class="text-lg">Kein Video geladen</p>
-        <p class="mt-2 text-sm">Öffne ein Video über das Menü</p>
+        <p class="mt-2 text-sm">Öffne ein Video oder lade ein Projekt</p>
       </div>
     </div>
   {/if}

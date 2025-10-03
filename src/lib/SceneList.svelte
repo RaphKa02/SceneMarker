@@ -1,6 +1,9 @@
 <script lang="ts">
   import { Button } from '$components/ui/button';
+  import { appState, getState, setState } from '$lib/state';
+  import CircleArrowDown from '@lucide/svelte/icons/circle-arrow-down';
   import EyeOff from '@lucide/svelte/icons/eye-off';
+  import Info from '@lucide/svelte/icons/info';
   import Lock from '@lucide/svelte/icons/lock';
   import LockOpen from '@lucide/svelte/icons/lock-open';
   import Plus from '@lucide/svelte/icons/plus';
@@ -199,5 +202,30 @@
     {/if}
   </div>
 
-  <div class="border-border flex h-10 flex-col justify-center gap-2 border-t p-4"></div>
+  <div class="border-border flex h-12 items-center justify-end gap-1 border-t px-4">
+    {#if $appState.updateAvailable}
+      <Button variant="ghost" size="icon" onclick={() => setState({ showUpdatePopup: true })}>
+        <CircleArrowDown class="size-6" />
+      </Button>
+    {/if}
+    <Button variant="ghost" size="icon" class="group">
+      <Info class="size-6" />
+      <div
+        class="border-border bg-card fixed right-4 bottom-12 max-w-xs rounded-lg border p-3 text-xs opacity-0 transition-opacity group-focus:opacity-100"
+      >
+        <div class="mb-2 font-semibold">Tastenkürzel</div>
+        <div class="space-y-1">
+          <div><kbd class="rounded bg-gray-700 px-1 py-0.5">Strg+S</kbd> Speichern</div>
+          <div>
+            <kbd class="rounded bg-gray-700 px-1 py-0.5">Strg+Shift+S</kbd> Speichern unter
+          </div>
+          <div><kbd class="rounded bg-gray-700 px-1 py-0.5">Strg+O</kbd> Projekt öffnen</div>
+          <div><kbd class="rounded bg-gray-700 px-1 py-0.5">Strg+Shift+O</kbd> Video öffnen</div>
+          <div><kbd class="rounded bg-gray-700 px-1 py-0.5">Leertaste</kbd> Play/Pause</div>
+          <div><kbd class="rounded bg-gray-700 px-1 py-0.5">←/→</kbd> ±5 Sekunden</div>
+        </div>
+        <p class="text-muted-foreground mt-2">Version: {getState().version}</p>
+      </div>
+    </Button>
+  </div>
 </div>
