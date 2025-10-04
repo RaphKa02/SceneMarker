@@ -24,7 +24,7 @@
         "maximized": true,
         "theme": "Dark",
         "decorations": false,
-        "devtools": false
+        "devtools": true
       }
     ],
     "security": {

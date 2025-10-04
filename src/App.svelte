@@ -128,7 +128,7 @@
     if (!currentProject) return;
 
     const savePath = await save({
-      defaultPath: currentProject.videoPath,
+      defaultPath: currentProject.videoPath.replace(/\.[^/.]+$/, ''),
       filters: [
         {
           name: 'SceneMarker Project',

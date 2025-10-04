@@ -12,3 +12,9 @@
 ### Known issues
 
 - Start with project file not opening project
+
+## 0.1.2
+
+### Bugfix
+
+- Removed file extension from suggested project file name

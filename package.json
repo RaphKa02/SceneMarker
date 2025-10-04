@@ -1,7 +1,7 @@
 {
   "name": "scene-marker",
-  "version": "0.1.1",
-  "description": "",
+  "version": "0.1.2",
+  "description": "Video Scene Marker",
   "type": "module",
   "private": true,
   "scripts": {
