@@ -18,3 +18,5 @@
 ### Bugfix
 
 - Removed file extension from suggested project file name
+
+## 0.1.3
