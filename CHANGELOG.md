@@ -20,3 +20,5 @@
 - Removed file extension from suggested project file name
 
 ## 0.1.3
+
+- Fix open programm with priject file

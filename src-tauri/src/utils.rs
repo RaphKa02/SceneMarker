@@ -1,5 +1,12 @@
-use std::fs;
 use std::io::Write;
+use std::{env, fs};
+
+#[tauri::command]
+pub fn get_args() -> Vec<String> {
+    let args: Vec<String> = env::args().collect();
+
+    args.into()
+}
 
 #[tauri::command]
 pub fn logger(message: String, time: String, kind: &str) {

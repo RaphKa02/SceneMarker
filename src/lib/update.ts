@@ -1,7 +1,7 @@
 import { setState } from '$lib/state';
 import * as os from '@tauri-apps/plugin-os';
 import { relaunch } from '@tauri-apps/plugin-process';
-import { check, Update } from '@tauri-apps/plugin-updater';
+import { check, type Update } from '@tauri-apps/plugin-updater';
 import { toast } from 'svelte-sonner';
 import { dev } from '../../build.json';
 import logger from './logger';

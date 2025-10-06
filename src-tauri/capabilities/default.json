@@ -2,9 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": [
-    "main"
-  ],
+  "windows": ["main"],
   "permissions": [
     "core:default",
     "core:window:allow-destroy",
@@ -15,8 +13,15 @@
     "opener:default",
     "dialog:default",
     "fs:default",
-    "fs:allow-read-text-file",
     "fs:allow-write-text-file",
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [
+        {
+          "path": "**/*"
+        }
+      ]
+    },
     {
       "identifier": "fs:allow-read-file",
       "allow": [

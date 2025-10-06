@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Button } from '$components/ui/button';
   import UpdateAlert from '$components/UpdateAlert.svelte';
+  import logger from '$lib/logger';
   import SceneList from '$lib/SceneList.svelte';
   import { appState } from '$lib/state';
   import TopBar from '$lib/TopBar.svelte';
@@ -9,12 +10,13 @@
   import Minus from '@lucide/svelte/icons/minus';
   import Square from '@lucide/svelte/icons/square';
   import X from '@lucide/svelte/icons/x';
-  import { listen } from '@tauri-apps/api/event';
+  import { invoke } from '@tauri-apps/api/core';
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import { ask, open, save } from '@tauri-apps/plugin-dialog';
   import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
   import { onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
+  import { number, version } from '../build.json';
   import type { Project, Scene } from './types';
 
   let currentProject = $state<Project>();
@@ -25,17 +27,10 @@
   let isResizing = $state(false);
 
   onMount(() => {
-    const unlisten = listen('file-opened', (event) => {
-      const filePath = event.payload as string;
-      console.log('Datei geöffnet:', filePath);
+    logger.log(`SceneMarker ${version} ${number}`);
 
-      loadProjectFromPath(filePath);
-    });
+    processArgs();
 
-    return async () => (await unlisten)();
-  });
-
-  onMount(() => {
     const unlisten = getCurrentWindow().onCloseRequested(async (event) => {
       if (!projectModified) return;
 
@@ -50,6 +45,14 @@
 
     return async () => (await unlisten)();
   });
+
+  async function processArgs() {
+    const args: string[] = await invoke('get_args');
+
+    if (args[1] && args[1]) {
+      loadProjectFromPath(args[1]);
+    }
+  }
 
   function handleKeyDown(e: KeyboardEvent) {
     // Ignore shortcuts when typing in input fields
@@ -158,14 +161,14 @@
     }
   }
 
-  async function loadProjectFromPath(path: string) {
+  async function loadProjectFromPath(filePath: string) {
     try {
-      const content = await readTextFile(path);
+      const content = await readTextFile(filePath);
       const project: Project = JSON.parse(content);
       currentProject = project;
       projectModified = false;
     } catch (err) {
-      console.error('Fehler beim Laden:', err);
+      logger.error(`Fehler beim Laden der Projektdatei: ${err}`);
       toast.error('Fehler beim Öffnen', {
         description: 'Möglicherweise wurde die Datei geändert und ist nun beschädigt',
         dismiss: false,
@@ -231,7 +234,7 @@
     document.addEventListener('mouseup', stopResizing);
   }
 
-  function resize(e: any) {
+  function resize(e: MouseEvent) {
     if (isResizing) {
       const newWidth = window.innerWidth - e.clientX;
       sidebarWidth = newWidth;
