@@ -26,3 +26,5 @@
 ## 0.1.4
 
 - Fix save permission after startup with project file
+
+## 0.1.5

@@ -24,6 +24,10 @@ try {
     `./src-tauri/target/release/bundle/msi/SceneMarker_${version}_x64_en-US.msi`,
     `./src-tauri/target/release/upload/SceneMarker-${version}-windows-US-x64.msi`
   );
+  copyFileSync(
+    `./src-tauri/target/release/bundle/msi/SceneMarker_${version}_x64_de-DE.msi.sig`,
+    `./src-tauri/target/release/upload/SceneMarker-latest-windows-DE-x64.msi.sig`
+  );
 } catch (err) {
   console.log('File not found');
 }
