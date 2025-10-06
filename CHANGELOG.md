@@ -22,3 +22,7 @@
 ## 0.1.3
 
 - Fix open programm with priject file
+
+## 0.1.4
+
+- Fix save permission after startup with project file

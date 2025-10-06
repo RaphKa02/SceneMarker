@@ -13,7 +13,14 @@
     "opener:default",
     "dialog:default",
     "fs:default",
-    "fs:allow-write-text-file",
+    {
+      "identifier": "fs:allow-write-text-file",
+      "allow": [
+        {
+          "path": "**/*"
+        }
+      ]
+    },
     {
       "identifier": "fs:allow-read-text-file",
       "allow": [
@@ -27,14 +34,6 @@
       "allow": [
         {
           "path": "**/*"
-        }
-      ]
-    },
-    {
-      "identifier": "fs:scope",
-      "allow": [
-        {
-          "path": "/*"
         }
       ]
     },
