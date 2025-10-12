@@ -1,10 +1,11 @@
 <script lang="ts">
+  import SceneList from '$components/scene-list/SceneList.svelte';
   import { Button } from '$components/ui/button';
   import UpdateAlert from '$components/UpdateAlert.svelte';
   import logger from '$lib/logger';
-  import SceneList from '$lib/SceneList.svelte';
-  import { appState } from '$lib/state';
+  import { appState } from '$lib/state.svelte';
   import TopBar from '$lib/TopBar.svelte';
+  import type { Project } from '$lib/types';
   import VideoPlayer from '$lib/VideoPlayer.svelte';
   import Eye from '@lucide/svelte/icons/eye';
   import Minus from '@lucide/svelte/icons/minus';
@@ -16,11 +17,7 @@
   import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
   import { onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
-  import { number, version } from '../build.json';
-  import type { Project, Scene } from './types';
-
-  let currentProject = $state<Project>();
-  let projectModified = $state(false);
+  import { dev, number, version } from '../build.json';
 
   let sidebarWidth = $state(320);
   let sidebarVisible = $state(true);
@@ -32,7 +29,7 @@
     processArgs();
 
     const unlisten = getCurrentWindow().onCloseRequested(async (event) => {
-      if (!projectModified) return;
+      if (!appState.projectModified || dev) return;
 
       const confirmed = await ask(
         'Das Projekt wurde bearbeitet und es liegen nicht gespeicherte Änderungen vor. Trotzdem schließen?',
@@ -44,6 +41,11 @@
     });
 
     return async () => (await unlisten)();
+  });
+
+  $effect(() => {
+    JSON.stringify(appState.project);
+    appState.projectModified = true;
   });
 
   async function processArgs() {
@@ -99,39 +101,44 @@
       });
 
       if (selected) {
-        if (!currentProject) currentProject = { currentTime: 0, scenes: [], videoPath: '' };
-        currentProject.videoPath = selected;
-        if (reset) currentProject.scenes = [];
-        projectModified = false;
+        if (reset) {
+          appState.project = {
+            version,
+            currentTime: 0,
+            sceneListItems: [],
+            videoPath: undefined,
+            filePath: undefined,
+          };
+        }
+        appState.project.videoPath = selected;
       }
     } catch (err) {
-      console.error('Fehler beim Öffnen des Videos:', err);
+      logger.error('Fehler beim Öffnen des Videos:', String(err));
+      toast.error('Fehler beim Öffnen des Videos');
     }
   }
 
   async function saveProject() {
-    if (!currentProject?.filePath) return saveProjectAt();
+    if (!appState.project.filePath) return saveProjectAt();
+
+    appState.project.version = version;
 
     try {
-      await writeTextFile(currentProject.filePath, JSON.stringify(currentProject, null, 2));
-      projectModified = false;
-      console.log('Saved project at ' + currentProject.filePath);
+      await writeTextFile(appState.project.filePath, JSON.stringify(appState.project, null, 2));
+      appState.projectModified = false;
+      logger.log('Projekt unter', appState.project.filePath, 'gespeichert');
+      toast.success('Gespeichert');
     } catch (err) {
-      console.error('Fehler beim Speichern:', err);
+      logger.error('Fehler beim Speichern:', String(err));
       toast.error('Fehler beim Speichern', {
         description: 'Möglicherweise kann in den angegebenen Ort nicht geschrieben werden',
-        dismiss: false,
-        dismissable: true,
-        closeButton: true,
       });
     }
   }
 
   async function saveProjectAt() {
-    if (!currentProject) return;
-
     const savePath = await save({
-      defaultPath: currentProject.videoPath.replace(/\.[^/.]+$/, ''),
+      defaultPath: appState.project.videoPath?.replace(/\.[^/.]+$/, ''),
       filters: [
         {
           name: 'SceneMarker Project',
@@ -141,7 +148,7 @@
     });
 
     if (savePath) {
-      currentProject.filePath = savePath;
+      appState.project.filePath = savePath;
       saveProject();
     }
   }
@@ -165,8 +172,8 @@
     try {
       const content = await readTextFile(filePath);
       const project: Project = JSON.parse(content);
-      currentProject = project;
-      projectModified = false;
+      appState.project = project;
+      appState.projectModified = false;
     } catch (err) {
       logger.error(`Fehler beim Laden der Projektdatei: ${err}`);
       toast.error('Fehler beim Öffnen', {
@@ -179,51 +186,31 @@
   }
 
   function addScene() {
-    if (!currentProject) return;
-
-    const newScene: Scene = {
+    appState.project.sceneListItems.push({
+      type: 'scene',
       id: crypto.randomUUID(),
-      title: `Szene ${currentProject.scenes.length + 1}`,
-      time: currentProject.currentTime,
-    };
-    currentProject.scenes = [...currentProject.scenes, newScene];
-    projectModified = true;
-  }
-
-  function updateScene(id: string, updates: Partial<Scene>) {
-    if (!currentProject) return;
-
-    currentProject.scenes = currentProject.scenes.map((s) =>
-      s.id === id
-        ? {
-            ...s,
-            ...updates,
-            time:
-              updates.time === -1 ? (currentProject?.currentTime ?? 0) : (updates.time ?? s.time),
-          }
-        : s
-    );
-    projectModified = true;
-  }
-
-  function updateScenes(newScenes: Scene[]) {
-    if (!currentProject) return;
-
-    currentProject.scenes = newScenes;
-    projectModified = true;
-  }
-
-  function deleteScene(id: string) {
-    if (!currentProject) return;
-
-    currentProject.scenes = currentProject.scenes.filter((s) => s.id !== id);
-    projectModified = true;
+      scene: {
+        id: crypto.randomUUID(),
+        title: `Szene ${appState.sceneCount + 1}`,
+        time: appState.project.currentTime,
+      },
+    });
   }
 
   function jumpToScene(time: number) {
-    if (!currentProject) return;
+    appState.project.currentTime = time;
+  }
 
-    currentProject.currentTime = time;
+  function addGroup() {
+    appState.project.sceneListItems.push({
+      type: 'group',
+      id: crypto.randomUUID(),
+      group: {
+        id: crypto.randomUUID(),
+        name: `Gruppe ${appState.groupCount + 1}`,
+      },
+      items: [],
+    });
   }
 
   function startResizing(e: Event) {
@@ -249,11 +236,11 @@
 </script>
 
 <svelte:window
-  onbeforeunload={(e) => projectModified && e.preventDefault()}
+  onbeforeunload={(e) => appState.projectModified && !dev && e.preventDefault()}
   onkeydown={handleKeyDown}
 />
 
-{#if $appState.updateAvailable}
+{#if appState.updateAvailable}
   <UpdateAlert />
 {/if}
 
@@ -288,9 +275,7 @@
 </div>
 <div class="flex h-screen flex-col bg-gray-900 text-gray-100">
   <TopBar
-    {projectModified}
-    hasProject={!!currentProject}
-    projectName={currentProject?.filePath?.split(/[\\/]/).pop() ?? null}
+    projectName={appState.project.filePath?.split(/[\\/]/).pop() ?? null}
     onOpenVideo={openVideoDialog}
     onSaveProject={saveProject}
     onSaveProjectAt={saveProjectAt}
@@ -300,13 +285,8 @@
   <div class="flex flex-1 overflow-hidden">
     <main class="flex flex-1 flex-col p-4">
       <VideoPlayer
-        videoPath={currentProject?.videoPath}
-        bind:currentTime={
-          () => currentProject?.currentTime ?? 0,
-          (v) => {
-            if (currentProject) currentProject.currentTime = v;
-          }
-        }
+        videoPath={appState.project.videoPath}
+        bind:currentTime={appState.project.currentTime}
         onRelocateVideo={() => openVideoDialog(false)}
       />
     </main>
@@ -316,7 +296,6 @@
         class="border-border relative max-w-2xl min-w-48 border-l"
         style="width: {sidebarWidth}px;"
       >
-        <!-- Drag handle -->
         <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
         <div
           class="hover:bg-border absolute top-0 left-0 h-full w-1 cursor-col-resize"
@@ -325,12 +304,10 @@
         ></div>
         <SceneList
           bind:visible={sidebarVisible}
-          activeProject={currentProject}
-          onAddScene={addScene}
+          bind:listItems={appState.project.sceneListItems}
           onJumpToScene={jumpToScene}
-          onUpdateScene={updateScene}
-          onUpdateScenes={updateScenes}
-          onDeleteScene={deleteScene}
+          onAddScene={addScene}
+          onAddGroup={addGroup}
         />
       </aside>
     {:else}

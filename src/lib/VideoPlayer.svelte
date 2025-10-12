@@ -117,11 +117,7 @@
       return convertFileSrc(filePath);
     } catch (e) {
       logger.error(`Fehler bei convertFileSrc: ${e}`);
-      toast.error('Fehler', {
-        description: JSON.stringify(e),
-        dismiss: false,
-        dismissable: true,
-      });
+      toast.error('Fehler beim Laden des Videos');
     }
   }
 

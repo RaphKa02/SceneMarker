@@ -12,7 +12,7 @@ export const log = (...message: string[]) => {
   const time = getTime();
 
   console.log(`[SceneMarker LOG] (${time})`, ...message);
-  invoke('logger', { message, time, kind: 'log' });
+  invoke('logger', { message: message.join(' '), time, kind: 'log' });
   writeToFile(`[SceneMarker LOG] (${time})`, ...message);
 };
 
@@ -20,7 +20,7 @@ export const warn = (...message: string[]) => {
   const time = getTime();
 
   console.log(`[SceneMarker WARN] (${time})`, ...message);
-  invoke('logger', { message, time, kind: 'warn' });
+  invoke('logger', { message: message.join(' '), time, kind: 'warn' });
   writeToFile(`[SceneMarker WARN] (${time})`, ...message);
 };
 
@@ -28,7 +28,7 @@ export const error = (...message: string[]) => {
   const time = getTime();
 
   console.log(`[SceneMarker ERROR] (${time})`, ...message);
-  invoke('logger', { message, time, kind: 'error' });
+  invoke('logger', { message: message.join(' '), time, kind: 'error' });
   writeToFile(`[SceneMarker ERROR] (${time})`, ...message);
 };
 

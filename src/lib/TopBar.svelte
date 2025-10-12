@@ -1,10 +1,9 @@
 <script lang="ts">
   import { Button } from '$components/ui/button';
+  import { appState } from '$lib/state.svelte';
   import Save from '@lucide/svelte/icons/save';
 
   interface Props {
-    projectModified: boolean;
-    hasProject: boolean;
     projectName: string | null;
     onOpenVideo: () => void;
     onSaveProject: () => void;
@@ -12,15 +11,7 @@
     onLoadProject: () => void;
   }
 
-  let {
-    projectModified,
-    hasProject,
-    projectName,
-    onOpenVideo,
-    onSaveProject,
-    onSaveProjectAt,
-    onLoadProject,
-  }: Props = $props();
+  let { projectName, onOpenVideo, onSaveProject, onSaveProjectAt, onLoadProject }: Props = $props();
 </script>
 
 <div
@@ -56,7 +47,7 @@
     Projekt laden
   </Button>
 
-  <Button onclick={onSaveProjectAt} variant="outline" disabled={!hasProject} title="(Strg+Shift+S)">
+  <Button onclick={onSaveProjectAt} variant="outline" title="(Strg+Shift+S)">
     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path
         stroke-linecap="round"
@@ -69,8 +60,8 @@
   </Button>
   <Button
     onclick={onSaveProject}
-    disabled={!projectModified}
-    variant={projectModified ? 'default' : 'outline'}
+    disabled={!appState.projectModified}
+    variant={appState.projectModified ? 'default' : 'outline'}
     title="Speichern (Strg+S)"
   >
     <Save />
@@ -80,7 +71,7 @@
     <div class="text-muted-foreground text-sm">
       {projectName}
     </div>
-  {:else if hasProject}
-    <div class="text-muted-foreground text-sm">Video geladen</div>
+  {:else if appState.project.videoPath && !appState.project.filePath}
+    <p class="text-muted-foreground">Neues Projekt</p>
   {/if}
 </div>

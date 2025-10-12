@@ -1,5 +1,5 @@
 <script>
-  import { appState, setState } from '$lib/state';
+  import { appState } from '$lib/state.svelte';
   import { installUpdate } from '$lib/update';
   import { Button } from './ui/button';
 </script>
@@ -7,7 +7,7 @@
 <div
   class={[
     'fixed top-0 left-1/2 z-10 -translate-x-1/2 shadow',
-    !$appState.showUpdatePopup && 'hidden',
+    !appState.showUpdatePopup && 'hidden',
   ]}
 >
   <div
@@ -74,7 +74,7 @@
     <Button
       class="hover:text-primary"
       variant="ghost"
-      onclick={() => setState({ showUpdatePopup: false })}
+      onclick={() => (appState.showUpdatePopup = false)}
       aria-label="close popup"
     >
       <svg
