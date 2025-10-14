@@ -1,8 +1,10 @@
 <script lang="ts">
   import { Button } from '$components/ui/button';
+  import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import logger from '$lib/logger';
   import { formatTime } from '$utils';
   import { convertFileSrc } from '@tauri-apps/api/core';
+  import { onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
 
   interface Props {
@@ -26,6 +28,11 @@
   let showControlls = $state(false);
 
   const skipIntervals = [0.03, 1, 3, 5, 10, 60];
+
+  onMount(() => {
+    addActions();
+    return () => removeActions();
+  });
 
   $effect(() => {
     if (videoElement && videoPath) {
@@ -121,32 +128,20 @@
     }
   }
 
-  function handleKeyDown(e: KeyboardEvent) {
-    // Ignore shortcuts when typing in input fields
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-      return;
-    }
+  function addActions() {
+    keyHandler.registerAction('play-pause', () => {
+      if (videoElement) isPlaying ? videoElement.pause() : videoElement.play();
+    });
+    keyHandler.registerAction('skip-back-5', () => skip(-5));
+    keyHandler.registerAction('skip-forward-5', () => skip(5));
+  }
 
-    // Space - Play/Pause
-    if (e.key === ' ' && videoElement) {
-      e.preventDefault();
-      isPlaying ? videoElement?.pause() : videoElement?.play();
-    }
-
-    // Arrow keys - Skip ±5s
-    if (e.key === 'ArrowLeft' && videoElement) {
-      e.preventDefault();
-      skip(-5);
-    }
-
-    if (e.key === 'ArrowRight' && videoElement) {
-      e.preventDefault();
-      skip(5);
-    }
+  function removeActions() {
+    keyHandler.removeAction('play-pause');
+    keyHandler.removeAction('skip-back-5');
+    keyHandler.removeAction('skip-forward-5');
   }
 </script>
-
-<svelte:window onkeydown={handleKeyDown} />
 
 <div class="relative flex flex-col overflow-hidden rounded-lg bg-black shadow-2xl">
   {#if videoPath && !hasVideoError}

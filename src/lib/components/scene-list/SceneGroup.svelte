@@ -17,11 +17,11 @@
     group: Group;
     items: SceneListItemScene[];
     dragDisabled: boolean;
+    editingId: string | null;
+    dropFromOthersDisabled: boolean;
     onJumpToScene: (time: number) => void;
     onDeleteScene: (id: string) => void;
     onDeleteGroup: () => void;
-    editingId: string | null;
-    dropFromOthersDisabled: boolean;
   }
 
   let {

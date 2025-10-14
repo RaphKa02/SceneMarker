@@ -1,21 +1,20 @@
 <script lang="ts">
   import SceneList from '$components/scene-list/SceneList.svelte';
+  import TopBar from '$components/TopBar.svelte';
   import { Button } from '$components/ui/button';
   import UpdateAlert from '$components/UpdateAlert.svelte';
+  import VideoPlayer from '$components/VideoPlayer.svelte';
+  import WindowControlls from '$components/WindowControlls.svelte';
+  import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import logger from '$lib/logger';
   import { appState } from '$lib/state.svelte';
-  import TopBar from '$lib/TopBar.svelte';
   import type { Project } from '$lib/types';
-  import VideoPlayer from '$lib/VideoPlayer.svelte';
   import Eye from '@lucide/svelte/icons/eye';
-  import Minus from '@lucide/svelte/icons/minus';
-  import Square from '@lucide/svelte/icons/square';
-  import X from '@lucide/svelte/icons/x';
   import { invoke } from '@tauri-apps/api/core';
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import { ask, open, save } from '@tauri-apps/plugin-dialog';
   import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { toast } from 'svelte-sonner';
   import { dev, number, version } from '../build.json';
 
@@ -27,6 +26,8 @@
     logger.log(`SceneMarker ${version} ${number}`);
 
     processArgs();
+    setActions();
+    addKeyboardShortcuts();
 
     const unlisten = getCurrentWindow().onCloseRequested(async (event) => {
       if (!appState.projectModified || dev) return;
@@ -40,7 +41,10 @@
       }
     });
 
-    return async () => (await unlisten)();
+    return async () => {
+      removeActions();
+      (await unlisten)();
+    };
   });
 
   $effect(() => {
@@ -56,35 +60,34 @@
     }
   }
 
-  function handleKeyDown(e: KeyboardEvent) {
-    // Ignore shortcuts when typing in input fields
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-      return;
-    }
+  function addKeyboardShortcuts() {
+    keyHandler.bindKey('CTRL+S', 'save-project');
+    keyHandler.bindKey('CTRL+SHIFT+S', 'save-project-at');
+    keyHandler.bindKey('CTRL+O', 'load-project');
+    keyHandler.bindKey('CTRL+SHIFT+O', 'open-video-dialog');
+    keyHandler.bindKey('CTRL+E', 'toggle-sidebar');
+    keyHandler.bindKey('CTRL+N', 'add-scene');
+    keyHandler.bindKey('CTRL+G', 'add-group');
+    keyHandler.bindKey('CTRL+L', 'toggle-locked');
+    keyHandler.bindKey('SPACE', 'play-pause');
+    keyHandler.bindKey('ArrowLeft', 'skip-back-5');
+    keyHandler.bindKey('ArrowRight', 'skip-forward-5');
+  }
 
-    // Ctrl+S - Quick save
-    if (e.ctrlKey && e.key === 's' && !e.shiftKey) {
-      e.preventDefault();
-      saveProject();
-    }
+  function setActions() {
+    keyHandler.registerAction('save-project', saveProject);
+    keyHandler.registerAction('save-project-at', saveProjectAt);
+    keyHandler.registerAction('load-project', loadProject);
+    keyHandler.registerAction('open-video-dialog', openVideoDialog);
+    keyHandler.registerAction('toggle-sidebar', () => (sidebarVisible = !sidebarVisible));
+  }
 
-    // Ctrl+Shift+S - Save as
-    if (e.ctrlKey && e.shiftKey && e.key === 'S') {
-      e.preventDefault();
-      saveProjectAt();
-    }
-
-    // Ctrl+O - Open project
-    if (e.ctrlKey && e.key === 'o' && !e.shiftKey) {
-      e.preventDefault();
-      loadProject();
-    }
-
-    // Ctrl+Shift+O - Open video
-    if (e.ctrlKey && e.shiftKey && e.key === 'O') {
-      e.preventDefault();
-      openVideoDialog();
-    }
+  function removeActions() {
+    keyHandler.removeAction('save-project');
+    keyHandler.removeAction('save-project-at');
+    keyHandler.removeAction('load-project');
+    keyHandler.removeAction('open-video-dialog');
+    keyHandler.removeAction('toggle-sidebar');
   }
 
   async function openVideoDialog(reset = true) {
@@ -170,9 +173,17 @@
 
   async function loadProjectFromPath(filePath: string) {
     try {
+      if (appState.projectModified) {
+        const confirmed = await ask(
+          'Das Projekt wurde bearbeitet und es liegen nicht gespeicherte Änderungen vor. Trotzdem laden?',
+          { title: 'SceneMarker', kind: 'warning', cancelLabel: 'Nein', okLabel: 'Ja' }
+        );
+        if (!confirmed) return;
+      }
       const content = await readTextFile(filePath);
       const project: Project = JSON.parse(content);
       appState.project = project;
+      await tick();
       appState.projectModified = false;
     } catch (err) {
       logger.error(`Fehler beim Laden der Projektdatei: ${err}`);
@@ -237,42 +248,15 @@
 
 <svelte:window
   onbeforeunload={(e) => appState.projectModified && !dev && e.preventDefault()}
-  onkeydown={handleKeyDown}
+  onkeydown={(e) => keyHandler.handle(e)}
 />
 
 {#if appState.updateAvailable}
   <UpdateAlert />
 {/if}
 
-<div class="fixed top-0 right-0 flex gap-2 p-2">
-  <Button
-    variant="outline"
-    size="icon"
-    onclick={() => {
-      getCurrentWindow().minimize();
-    }}
-  >
-    <Minus />
-  </Button>
-  <Button
-    variant="outline"
-    size="icon"
-    onclick={() => {
-      getCurrentWindow().toggleMaximize();
-    }}
-  >
-    <Square />
-  </Button>
-  <Button
-    variant="outline"
-    size="icon"
-    onclick={() => {
-      getCurrentWindow().close();
-    }}
-  >
-    <X />
-  </Button>
-</div>
+<WindowControlls />
+
 <div class="flex h-screen flex-col bg-gray-900 text-gray-100">
   <TopBar
     projectName={appState.project.filePath?.split(/[\\/]/).pop() ?? null}
@@ -315,7 +299,7 @@
         variant="outline"
         size="icon"
         onclick={() => (sidebarVisible = !sidebarVisible)}
-        title="Schaltet die Sidebar an"
+        title="Schaltet die Sidebar an (Strg+E)"
         class="mt-4 mr-2"
       >
         <Eye />

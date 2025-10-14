@@ -66,8 +66,17 @@
     'group/sc bg-card text-card-foreground w-full rounded-lg border px-3 py-2 text-left shadow-sm transition-colors',
     !editing && 'hover:bg-input',
   ]}
-  onclick={() => !editing && onJumpToScene(scene.time)}
-  onkeypress={(e) => e.key === 'ENTER' && !editing && onJumpToScene(scene.time)}
+  onclick={(e) => {
+    e.stopPropagation();
+    if (!editing) {
+      onJumpToScene(scene.time);
+    }
+  }}
+  onkeypress={(e) => {
+    if (e.key === 'ENTER' && !editing) {
+      onJumpToScene(scene.time);
+    }
+  }}
   role="button"
   tabindex="0"
 >

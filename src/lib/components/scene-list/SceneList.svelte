@@ -1,6 +1,7 @@
 <script lang="ts">
   import DnDZone from '$components/scene-list/DnDZone.svelte';
   import { Button } from '$components/ui/button';
+  import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import { appState } from '$lib/state.svelte';
   import type { SceneListItem } from '$lib/types';
   import CircleArrowDown from '@lucide/svelte/icons/circle-arrow-down';
@@ -10,6 +11,7 @@
   import Lock from '@lucide/svelte/icons/lock';
   import LockOpen from '@lucide/svelte/icons/lock-open';
   import Plus from '@lucide/svelte/icons/plus';
+  import { onMount } from 'svelte';
 
   interface Props {
     visible: boolean;
@@ -30,19 +32,41 @@
   let locked = $state(false);
 
   let searchQuery = $state('');
+
+  onMount(() => {
+    setActions();
+    return () => removeKeyboardShortcuts();
+  });
+
+  function setActions() {
+    keyHandler.registerAction('add-scene', onAddScene);
+    keyHandler.registerAction('add-group', onAddGroup);
+    keyHandler.registerAction('toggle-locked', () => (locked = !locked));
+  }
+
+  function removeKeyboardShortcuts() {
+    keyHandler.removeAction('add-scene');
+    keyHandler.removeAction('add-group');
+    keyHandler.removeAction('toggle-locked');
+  }
 </script>
 
 <div class="bg-background flex h-full flex-col">
   <div class="border-border flex justify-end border-b p-2">
     <div class="flex flex-1 gap-2">
-      <Button variant="default" size="icon" onclick={onAddScene} title="Fügt eine neue Szene hinzu">
+      <Button
+        variant="default"
+        size="icon"
+        onclick={onAddScene}
+        title="Fügt eine neue Szene hinzu (Strg+N)"
+      >
         <Plus />
       </Button>
       <Button
         variant="outline"
         size="icon"
         onclick={onAddGroup}
-        title="Erstellt einen neuen Ordner"
+        title="Erstellt einen neuen Ordner (Strg+G)"
       >
         <FolderPlus />
       </Button>
@@ -52,7 +76,7 @@
         variant="outline"
         size="icon"
         onclick={() => (locked = !locked)}
-        title="Schaltet drag and drop an/aus"
+        title="Schaltet drag and drop an/aus (Strg+L)"
       >
         {#if locked}
           <Lock />
@@ -64,7 +88,7 @@
         variant="outline"
         size="icon"
         onclick={() => (visible = !visible)}
-        title="Schaltet die Sidebar aus"
+        title="Schaltet die Sidebar aus (Strg+E)"
       >
         <EyeOff />
       </Button>
@@ -102,11 +126,16 @@
 
   <div class="border-border flex h-12 items-center justify-end gap-1 border-t px-4">
     {#if appState.updateAvailable}
-      <Button variant="ghost" size="icon" onclick={() => (appState.showUpdatePopup = true)}>
+      <Button
+        variant="ghost"
+        size="icon"
+        tabindex={-1}
+        onclick={() => (appState.showUpdatePopup = true)}
+      >
         <CircleArrowDown class="size-6" />
       </Button>
     {/if}
-    <Button variant="ghost" size="icon" class="group">
+    <Button variant="ghost" size="icon" class="group" tabindex={-1}>
       <Info class="size-6" />
       <div
         class="border-border bg-card fixed right-4 bottom-12 hidden max-w-xs rounded-lg border p-3 text-xs transition-opacity group-focus:block"
