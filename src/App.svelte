@@ -8,7 +8,7 @@
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import logger from '$lib/logger';
   import { appState } from '$lib/state.svelte';
-  import type { Project } from '$lib/types';
+  import { convertProject } from '$lib/migrationManager';
   import Eye from '@lucide/svelte/icons/eye';
   import { invoke } from '@tauri-apps/api/core';
   import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -181,10 +181,10 @@
         if (!confirmed) return;
       }
       const content = await readTextFile(filePath);
-      const project: Project = JSON.parse(content);
+      const { project, migrated } = convertProject(JSON.parse(content), version);
       appState.project = project;
       await tick();
-      appState.projectModified = false;
+      appState.projectModified = migrated;
     } catch (err) {
       logger.error(`Fehler beim Laden der Projektdatei: ${err}`);
       toast.error('Fehler beim Öffnen', {
