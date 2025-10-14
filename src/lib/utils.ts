@@ -1,3 +1,5 @@
+import logger from '$lib/logger';
+import { convertFileSrc } from '@tauri-apps/api/core';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -42,4 +44,12 @@ export function once(fn?: (event: MouseEvent) => void) {
     fn?.(event);
     fn = undefined;
   };
+}
+
+export function convertFile(filePath: string) {
+  try {
+    return convertFileSrc(filePath);
+  } catch (e) {
+    logger.error(`Fehler bei convertFileSrc: ${e}`);
+  }
 }

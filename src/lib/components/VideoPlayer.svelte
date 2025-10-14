@@ -1,11 +1,8 @@
 <script lang="ts">
   import { Button } from '$components/ui/button';
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
-  import logger from '$lib/logger';
   import { formatTime } from '$utils';
-  import { convertFileSrc } from '@tauri-apps/api/core';
   import { onMount } from 'svelte';
-  import { toast } from 'svelte-sonner';
 
   interface Props {
     videoPath?: string;
@@ -35,18 +32,7 @@
   });
 
   $effect(() => {
-    if (videoElement && videoPath) {
-      const convertedPath = convertFile(videoPath);
-      if (convertedPath) {
-        videoElement.src = convertedPath;
-      }
-    }
-  });
-
-  $effect(() => {
-    if (videoPath) {
-      hasVideoError = false;
-    }
+    if (videoPath) hasVideoError = false;
   });
 
   function togglePlay() {
@@ -119,15 +105,6 @@
     controllInterval = setInterval(() => (showControlls = false), 3000);
   }
 
-  function convertFile(filePath: string) {
-    try {
-      return convertFileSrc(filePath);
-    } catch (e) {
-      logger.error(`Fehler bei convertFileSrc: ${e}`);
-      toast.error('Fehler beim Laden des Videos');
-    }
-  }
-
   function addActions() {
     keyHandler.registerAction('play-pause', () => {
       if (videoElement) isPlaying ? videoElement.pause() : videoElement.play();
@@ -154,12 +131,8 @@
       onpause={handlePause}
       onerror={(e) => {
         hasVideoError = true;
-        toast.error('Fehler', {
-          description: JSON.stringify(e),
-          dismiss: false,
-          dismissable: true,
-        });
       }}
+      src={videoPath}
       onclick={handleVideoClick}
       onmouseenter={handleMouseEnter}
     >
@@ -281,9 +254,9 @@
     </div>
   {:else if hasVideoError}
     <div class="bg-background flex aspect-video items-center justify-center">
-      <div class="text-muted-foreground px-8 text-center">
+      <div class="text-muted-foreground flex flex-col items-center gap-6 px-8">
         <svg
-          class="text-destructive mx-auto mb-4 h-20 w-20"
+          class="text-destructive mx-auto h-20 w-20"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -295,13 +268,16 @@
             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
           />
         </svg>
-        <p class="mb-2 text-lg font-semibold">Video konnte nicht geladen werden</p>
-        <p class="mb-6 text-sm">Die Datei wurde möglicherweise verschoben oder gelöscht</p>
+        <div class="space-y-2 text-center">
+          <p class="text-lg font-semibold">Video konnte nicht geladen werden</p>
+          <p class="text-sm">Die Datei wurde möglicherweise verschoben oder gelöscht</p>
+        </div>
+        <p class="text-sm">{videoPath?.split(/[\\/]/).pop()}</p>
         <Button
           onclick={() => {
             onRelocateVideo?.();
           }}
-          class="bg-primary text-primary-foreground hover:bg-primary mx-auto flex cursor-pointer items-center gap-2 rounded-lg px-6 py-3 font-semibold transition-colors"
+          class="bg-primary text-primary-foreground hover:bg-primary flex cursor-pointer items-center gap-2 rounded-lg px-6 py-3 font-semibold transition-colors"
         >
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path

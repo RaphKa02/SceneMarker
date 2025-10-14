@@ -13,6 +13,13 @@ class AppState implements LibState {
     sceneListItems: [],
   });
 
+  empty = $derived(
+    !this.project.filePath &&
+      !this.project.videoPath &&
+      this.project.currentTime === 0 &&
+      this.project.sceneListItems.length === 0
+  );
+
   sceneCount = $derived(
     this.project.sceneListItems.reduce((count, item) => {
       if (item.type === 'scene') {

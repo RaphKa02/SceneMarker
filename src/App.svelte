@@ -7,8 +7,9 @@
   import WindowControlls from '$components/WindowControlls.svelte';
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import logger from '$lib/logger';
-  import { appState } from '$lib/state.svelte';
   import { convertProject } from '$lib/migrationManager';
+  import { appState } from '$lib/state.svelte';
+  import { convertFile } from '$utils';
   import Eye from '@lucide/svelte/icons/eye';
   import { invoke } from '@tauri-apps/api/core';
   import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -21,6 +22,9 @@
   let sidebarWidth = $state(320);
   let sidebarVisible = $state(true);
   let isResizing = $state(false);
+
+  $inspect(appState.projectModified).with(console.trace);
+  $inspect(appState).with(console.trace);
 
   onMount(() => {
     logger.log(`SceneMarker ${version} ${number}`);
@@ -49,7 +53,7 @@
 
   $effect(() => {
     JSON.stringify(appState.project);
-    appState.projectModified = true;
+    appState.projectModified = !appState.empty;
   });
 
   async function processArgs() {
@@ -113,7 +117,9 @@
             filePath: undefined,
           };
         }
-        appState.project.videoPath = selected;
+        const convertedPath = convertFile(selected);
+        if (!convertedPath) toast.error('Fehler beim Laden des Videos');
+        else appState.project.videoPath = convertedPath;
       }
     } catch (err) {
       logger.error('Fehler beim Öffnen des Videos:', String(err));
