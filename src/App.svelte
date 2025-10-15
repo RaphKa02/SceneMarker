@@ -23,9 +23,6 @@
   let sidebarVisible = $state(true);
   let isResizing = $state(false);
 
-  $inspect(appState.projectModified).with(console.trace);
-  $inspect(appState).with(console.trace);
-
   onMount(() => {
     logger.log(`SceneMarker ${version} ${number}`);
 
@@ -147,7 +144,9 @@
 
   async function saveProjectAt() {
     const savePath = await save({
-      defaultPath: appState.project.videoPath?.replace(/\.[^/.]+$/, ''),
+      defaultPath: decodeURIComponent(appState.project.videoPath ?? '')
+        .replace('http://asset.localhost/', '')
+        .replace(/\.[^/.]+$/, ''),
       filters: [
         {
           name: 'SceneMarker Project',
