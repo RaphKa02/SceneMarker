@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Button } from '$components/ui/button';
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
+  import { appState } from '$lib/state.svelte';
   import { formatTime } from '$utils';
   import { onMount } from 'svelte';
 
@@ -101,22 +102,22 @@
 
   function restartControllsInterval() {
     showControlls = true;
-    clearInterval(controllInterval);
-    controllInterval = setInterval(() => (showControlls = false), 3000);
+    clearTimeout(controllInterval);
+    controllInterval = setTimeout(() => (showControlls = false), 3000);
   }
 
   function addActions() {
     keyHandler.registerAction('play-pause', () => {
       if (videoElement) isPlaying ? videoElement.pause() : videoElement.play();
     });
-    keyHandler.registerAction('skip-back-5', () => skip(-5));
-    keyHandler.registerAction('skip-forward-5', () => skip(5));
+    keyHandler.registerAction('skip-back', () => skip(-Number(appState.settings.skipIntervall)));
+    keyHandler.registerAction('skip-forward', () => skip(Number(appState.settings.skipIntervall)));
   }
 
   function removeActions() {
     keyHandler.removeAction('play-pause');
-    keyHandler.removeAction('skip-back-5');
-    keyHandler.removeAction('skip-forward-5');
+    keyHandler.removeAction('skip-back');
+    keyHandler.removeAction('skip-forward');
   }
 </script>
 

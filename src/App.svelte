@@ -1,5 +1,6 @@
 <script lang="ts">
   import SceneList from '$components/scene-list/SceneList.svelte';
+  import Settings from '$components/Settings.svelte';
   import TopBar from '$components/TopBar.svelte';
   import { Button } from '$components/ui/button';
   import UpdateAlert from '$components/UpdateAlert.svelte';
@@ -9,6 +10,7 @@
   import logger from '$lib/logger';
   import { convertProject } from '$lib/migrationManager';
   import { appState } from '$lib/state.svelte';
+  import type { SceneListItem } from '$lib/types';
   import { convertFile } from '$utils';
   import Eye from '@lucide/svelte/icons/eye';
   import { invoke } from '@tauri-apps/api/core';
@@ -19,8 +21,6 @@
   import { toast } from 'svelte-sonner';
   import { dev, number, version } from '../build.json';
 
-  let sidebarWidth = $state(320);
-  let sidebarVisible = $state(true);
   let isResizing = $state(false);
 
   onMount(() => {
@@ -28,7 +28,6 @@
 
     processArgs();
     setActions();
-    addKeyboardShortcuts();
 
     const unlisten = getCurrentWindow().onCloseRequested(async (event) => {
       if (!appState.projectModified || dev) return;
@@ -53,26 +52,16 @@
     appState.projectModified = !appState.empty;
   });
 
+  $effect(() => {
+    keyHandler.disable(appState.uiState.showSettings);
+  });
+
   async function processArgs() {
     const args: string[] = await invoke('get_args');
 
-    if (args[1] && args[1]) {
+    if (args[1]) {
       loadProjectFromPath(args[1]);
     }
-  }
-
-  function addKeyboardShortcuts() {
-    keyHandler.bindKey('CTRL+S', 'save-project');
-    keyHandler.bindKey('CTRL+SHIFT+S', 'save-project-at');
-    keyHandler.bindKey('CTRL+O', 'load-project');
-    keyHandler.bindKey('CTRL+SHIFT+O', 'open-video-dialog');
-    keyHandler.bindKey('CTRL+E', 'toggle-sidebar');
-    keyHandler.bindKey('CTRL+N', 'add-scene');
-    keyHandler.bindKey('CTRL+G', 'add-group');
-    keyHandler.bindKey('CTRL+L', 'toggle-locked');
-    keyHandler.bindKey('SPACE', 'play-pause');
-    keyHandler.bindKey('ArrowLeft', 'skip-back-5');
-    keyHandler.bindKey('ArrowRight', 'skip-forward-5');
   }
 
   function setActions() {
@@ -80,7 +69,10 @@
     keyHandler.registerAction('save-project-at', saveProjectAt);
     keyHandler.registerAction('load-project', loadProject);
     keyHandler.registerAction('open-video-dialog', openVideoDialog);
-    keyHandler.registerAction('toggle-sidebar', () => (sidebarVisible = !sidebarVisible));
+    keyHandler.registerAction(
+      'toggle-sidebar',
+      () => (appState.uiState.showSidebar = !appState.uiState.showSidebar)
+    );
   }
 
   function removeActions() {
@@ -202,7 +194,7 @@
   }
 
   function addScene() {
-    appState.project.sceneListItems.push({
+    addSceneListItem({
       type: 'scene',
       id: crypto.randomUUID(),
       scene: {
@@ -218,7 +210,7 @@
   }
 
   function addGroup() {
-    appState.project.sceneListItems.push({
+    addSceneListItem({
       type: 'group',
       id: crypto.randomUUID(),
       group: {
@@ -227,6 +219,12 @@
       },
       items: [],
     });
+  }
+
+  function addSceneListItem(item: SceneListItem) {
+    if (appState.settings.itemPlaceLocation === 'top')
+      appState.project.sceneListItems.unshift(item);
+    else appState.project.sceneListItems.push(item);
   }
 
   function startResizing(e: Event) {
@@ -240,7 +238,7 @@
   function resize(e: MouseEvent) {
     if (isResizing) {
       const newWidth = window.innerWidth - e.clientX;
-      sidebarWidth = newWidth;
+      appState.uiState.sidebarWidth = newWidth;
     }
   }
 
@@ -262,7 +260,7 @@
 
 <WindowControlls />
 
-<div class="flex h-screen flex-col bg-gray-900 text-gray-100">
+<div class="flex h-screen flex-col bg-background-dark">
   <TopBar
     projectName={appState.project.filePath?.split(/[\\/]/).pop() ?? null}
     onOpenVideo={openVideoDialog}
@@ -280,10 +278,10 @@
       />
     </main>
 
-    {#if sidebarVisible}
+    {#if appState.uiState.showSidebar}
       <aside
         class="border-border relative max-w-2xl min-w-48 border-l"
-        style="width: {sidebarWidth}px;"
+        style="width: {appState.uiState.sidebarWidth}px;"
       >
         <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
         <div
@@ -292,18 +290,19 @@
           role="separator"
         ></div>
         <SceneList
-          bind:visible={sidebarVisible}
+          bind:visible={appState.uiState.showSidebar}
           bind:listItems={appState.project.sceneListItems}
           onJumpToScene={jumpToScene}
           onAddScene={addScene}
           onAddGroup={addGroup}
+          onShowSettings={() => (appState.uiState.showSettings = true)}
         />
       </aside>
     {:else}
       <Button
         variant="outline"
         size="icon"
-        onclick={() => (sidebarVisible = !sidebarVisible)}
+        onclick={() => (appState.uiState.showSidebar = !appState.uiState.showSidebar)}
         title="Schaltet die Sidebar an (Strg+E)"
         class="mt-4 mr-2"
       >
@@ -312,6 +311,10 @@
     {/if}
   </div>
 </div>
+
+{#if appState.uiState.showSettings}
+  <Settings />
+{/if}
 
 <style>
   :global(body) {

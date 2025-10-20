@@ -118,7 +118,7 @@
       </div>
       {scene.title}
     </h1>
-    <div class="mt-1 font-mono text-xs text-gray-400">
+    <div class="mt-1 font-mono text-xs text-muted-foreground">
       {formatTime(scene.time)}
     </div>
   {/if}

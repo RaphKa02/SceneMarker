@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Button } from '$components/ui/button';
+  import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import { appState } from '$lib/state.svelte';
   import Save from '@lucide/svelte/icons/save';
 
@@ -19,11 +20,19 @@
   data-tauri-drag-region
 >
   <div class="mr-4 flex items-center gap-2">
-    <div class="flex h-8 w-8 items-center justify-center rounded bg-blue-600 font-bold">SM</div>
+    <div
+      class="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded font-bold"
+    >
+      SM
+    </div>
     <h1 class="text-lg font-bold">SceneMarker</h1>
   </div>
 
-  <Button onclick={onOpenVideo} variant="outline" title="(Strg+Shift+O)">
+  <Button
+    onclick={onOpenVideo}
+    variant="outline"
+    title={keyHandler.getKeyCombo('open-video-dialog', true)}
+  >
     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path
         stroke-linecap="round"
@@ -35,7 +44,11 @@
     Video öffnen
   </Button>
 
-  <Button onclick={onLoadProject} variant="outline" title="(Strg+O)">
+  <Button
+    onclick={onLoadProject}
+    variant="outline"
+    title={keyHandler.getKeyCombo('load-project', true)}
+  >
     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path
         stroke-linecap="round"
@@ -47,7 +60,11 @@
     Projekt laden
   </Button>
 
-  <Button onclick={onSaveProjectAt} variant="outline" title="(Strg+Shift+S)">
+  <Button
+    onclick={onSaveProjectAt}
+    variant="outline"
+    title={keyHandler.getKeyCombo('save-project-at', true)}
+  >
     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path
         stroke-linecap="round"
@@ -62,7 +79,7 @@
     onclick={onSaveProject}
     disabled={!appState.projectModified}
     variant={appState.projectModified ? 'default' : 'outline'}
-    title="Speichern (Strg+S)"
+    title={keyHandler.getKeyCombo('save-project', true)}
   >
     <Save />
   </Button>

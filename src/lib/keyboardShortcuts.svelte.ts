@@ -1,4 +1,6 @@
 import logger from '$lib/logger';
+import { Store } from '@tauri-apps/plugin-store';
+import { SvelteMap } from 'svelte/reactivity';
 
 interface Action {
   preventDefault?: boolean;
@@ -6,10 +8,31 @@ interface Action {
 }
 
 class KeyHandler {
-  #actions = new Map<string, Action>();
-  #bindings = new Map<string, string>();
+  #store = $state<Store>();
+  #actions = new SvelteMap<string, Action>();
+  #customBindings = new SvelteMap<string, string>();
+  #defaultBindings = new SvelteMap<string, string>();
 
-  #normalizeKeyEvent(e: KeyboardEvent) {
+  #disabled = false;
+
+  constructor() {
+    $effect.root(() => {
+      $effect(() => {
+        if (this.#store) {
+          this.#store.set('customKeybinds', this.#customBindings);
+        }
+      });
+    });
+  }
+
+  async setStore(store: Store) {
+    const saved = await store.get('customKeybinds');
+
+    if (saved) this.#customBindings = new SvelteMap(Object.entries(saved));
+    this.#store = store;
+  }
+
+  normalizeKeyEvent(e: KeyboardEvent) {
     const parts: string[] = [];
 
     if (e.ctrlKey) parts.push('ctrl');
@@ -18,7 +41,7 @@ class KeyHandler {
     if (e.metaKey) parts.push('meta'); // ⌘ on macOS
 
     if (e.code === 'Space') parts.push('space');
-    else parts.push(e.key.toLowerCase());
+    else if (!['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) parts.push(e.key.toLowerCase());
 
     return parts.join('+');
   }
@@ -29,14 +52,15 @@ class KeyHandler {
 
   handle(e: KeyboardEvent) {
     if (
+      this.#disabled ||
       e.target instanceof HTMLInputElement ||
       e.target instanceof HTMLTextAreaElement ||
       e.target instanceof HTMLSelectElement
     ) {
       return;
     }
-    const keyCombo = this.#normalizeKeyEvent(e);
-    const identifier = this.#bindings.get(keyCombo);
+    const keyCombo = this.normalizeKeyEvent(e);
+    const identifier = this.#customBindings.get(keyCombo) ?? this.#defaultBindings.get(keyCombo);
     if (!identifier) return;
 
     const action = this.#actions.get(identifier);
@@ -65,36 +89,54 @@ class KeyHandler {
       return;
     }
 
-    this.#bindings.set(normalizedCombo, identifier);
+    this.#customBindings.set(normalizedCombo, identifier);
   }
 
-  unbindKey(keyCombo: string) {
+  unbindKey(keyCombo: string | undefined) {
+    if (!keyCombo) return;
     const normalizedCombo = this.#normalizeKeyCombo(keyCombo);
-    this.#bindings.delete(normalizedCombo);
+    this.#customBindings.delete(normalizedCombo);
   }
 
   removeAction(identifier: string) {
     this.#actions.delete(identifier);
-    for (const [combo, id] of this.#bindings.entries()) {
-      if (id === identifier) {
-        this.#bindings.delete(combo);
-      }
-    }
   }
 
   clear() {
     this.#actions.clear();
-    this.#bindings.clear();
+    this.#customBindings.clear();
+  }
+
+  getKeyCombo(actionId: string, beautify?: boolean) {
+    for (const [combo, id] of this.#customBindings.entries()) {
+      if (id === actionId) {
+        return beautify ? combo.toUpperCase().replaceAll('+', ' + ') : combo;
+      }
+    }
+    return this.getDefaultKeyCombo(actionId, beautify);
+  }
+
+  getDefaultKeyCombo(actionId: string, beautify?: boolean) {
+    for (const [combo, id] of this.#defaultBindings.entries()) {
+      if (id === actionId) {
+        return beautify ? combo.toUpperCase().replaceAll('+', ' + ') : combo;
+      }
+    }
+    return undefined;
   }
 
   getBindings() {
-    return Object.fromEntries(this.#bindings);
+    return Object.fromEntries(this.#customBindings);
   }
 
-  setBindings(bindings: Record<string, string>) {
-    this.#bindings = new Map(
+  setDefaultBindings(bindings: Record<string, string>) {
+    this.#defaultBindings = new SvelteMap(
       Object.entries(bindings).map(([k, v]) => [this.#normalizeKeyCombo(k), v])
     );
+  }
+
+  disable(disabled: boolean) {
+    this.#disabled = disabled;
   }
 }
 

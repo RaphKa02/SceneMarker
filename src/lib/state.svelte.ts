@@ -1,7 +1,10 @@
-import type { LibState, Project } from './types';
+import type { Store } from '@tauri-apps/plugin-store';
+import { setMode } from 'mode-watcher';
+import type { LibState, Project, SettingsState, UiState } from './types';
 
 class AppState implements LibState {
   version = $state('');
+  #store = $state<Store>();
   updateAvailable = $state(false);
   showUpdatePopup = $state(true);
   projectModified = $state(false);
@@ -12,6 +15,38 @@ class AppState implements LibState {
     currentTime: 0,
     sceneListItems: [],
   });
+  uiState = $state<UiState>({
+    sidebarWidth: 320,
+    showSidebar: true,
+    lockSidebar: false,
+    showSettings: false,
+    settingsTab: '',
+  });
+  settings = $state<SettingsState>({
+    theme: 'dark',
+    openLastProjectOnStartup: false,
+    itemPlaceLocation: 'top',
+    skipIntervall: '5',
+  });
+
+  constructor() {
+    $effect.root(() => {
+      $effect(() => {
+        if (this.#store) {
+          this.#store.set('uiState', this.uiState);
+        }
+      });
+
+      $effect(() => {
+        if (this.#store) {
+          this.#store.set('settingsState', this.settings);
+        }
+      });
+      $effect(() => {
+        setMode(this.settings.theme);
+      });
+    });
+  }
 
   empty = $derived(
     !this.project.filePath &&
@@ -37,6 +72,16 @@ class AppState implements LibState {
       return count + (item.type === 'group' ? 1 : 0);
     }, 0)
   );
+
+  async setStore(store: Store) {
+    const uiState = await store.get<UiState>('uiState');
+    const settingsState = await store.get<SettingsState>('settingsState');
+
+    if (uiState) this.uiState = uiState;
+    if (settingsState) this.settings = settingsState;
+
+    this.#store = store;
+  }
 }
 
 export const appState = new AppState();

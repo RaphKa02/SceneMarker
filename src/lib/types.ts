@@ -39,3 +39,18 @@ export interface LibState {
   projectModified: boolean;
   project: Project;
 }
+
+export interface UiState {
+  sidebarWidth: number;
+  showSidebar: boolean;
+  lockSidebar: boolean;
+  showSettings: boolean;
+  settingsTab: string;
+}
+
+export interface SettingsState {
+  theme: 'system' | 'light' | 'dark';
+  openLastProjectOnStartup: boolean;
+  itemPlaceLocation: 'top' | 'bottom';
+  skipIntervall: string;
+}

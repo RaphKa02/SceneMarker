@@ -105,14 +105,6 @@
     >
       <h3 class="text-foreground font-semibold">{group.name}</h3>
       <div class="flex items-center">
-        <Button variant="ghost" size="icon" onclick={() => (extended = !extended)}>
-          <ChevronDown
-            class={[
-              'text-muted-foreground h-5 w-5 transform opacity-0 transition-transform group-hover/sg:opacity-100',
-              extended && 'rotate-180',
-            ]}
-          />
-        </Button>
         <Button
           variant="ghost"
           size="sm"
@@ -122,6 +114,14 @@
           bind:ref={dropdownAnchor}
         >
           <EllipsisVertical class="size-4 text-sm" />
+        </Button>
+        <Button variant="ghost" size="icon" onclick={() => (extended = !extended)}>
+          <ChevronDown
+            class={[
+              'text-muted-foreground h-5 w-5 transform transition-transform',
+              extended && 'rotate-180',
+            ]}
+          />
         </Button>
       </div>
     </div>

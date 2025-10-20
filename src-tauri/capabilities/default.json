@@ -38,6 +38,7 @@
       ]
     },
     "process:default",
-    "os:default"
+    "os:default",
+    "store:default"
   ]
 }
