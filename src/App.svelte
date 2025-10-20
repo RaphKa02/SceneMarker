@@ -17,10 +17,10 @@
   import { emitTo } from '@tauri-apps/api/event';
   import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
   import {
-      availableMonitors,
-      currentMonitor,
-      getAllWindows,
-      getCurrentWindow,
+    availableMonitors,
+    currentMonitor,
+    getAllWindows,
+    getCurrentWindow,
   } from '@tauri-apps/api/window';
   import { ask, open, save } from '@tauri-apps/plugin-dialog';
   import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
@@ -29,7 +29,6 @@
   import { dev, number, version } from '../build.json';
 
   let isResizing = $state(false);
-  let presentationWindow = $state<WebviewWindow>();
 
   onMount(() => {
     logger.log(`SceneMarker ${version} ${number}`);
@@ -210,6 +209,7 @@
         title: `Szene ${appState.sceneCount + 1}`,
         time: appState.project.currentTime,
       },
+      new: true,
     });
   }
 
@@ -232,6 +232,7 @@
         name: `Gruppe ${appState.groupCount + 1}`,
       },
       items: [],
+      new: true,
     });
   }
 

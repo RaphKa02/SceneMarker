@@ -8,12 +8,13 @@
   import EllipsisVertical from '@lucide/svelte/icons/ellipsis-vertical';
   import Pencil from '@lucide/svelte/icons/pencil';
   import Trash from '@lucide/svelte/icons/trash';
-  import { tick } from 'svelte';
+  import { onMount, tick } from 'svelte';
 
   interface Props {
     scene: Scene;
     editingId: string | null;
     locked: boolean;
+    newCreated: boolean;
     onJumpToScene: (time: number) => void;
     onDeleteScene: () => void;
   }
@@ -22,6 +23,7 @@
     scene = $bindable(),
     editingId = $bindable(null),
     locked,
+    newCreated = $bindable(),
     onJumpToScene,
     onDeleteScene,
   }: Props = $props();
@@ -31,16 +33,21 @@
   let deleteDialogOpen = $state(false);
   let dropdownAnchor = $state<HTMLElement | null>(null);
   let dialogAnchor = $state<HTMLElement | null>(null);
-  let inputRef = $state<HTMLElement | null>(null);
+  let inputRef = $state<HTMLInputElement | null>(null);
 
   const editing = $derived(editingId === scene.id);
 
+  onMount(() => {
+    if (newCreated) startEdit();
+  });
+
   async function startEdit() {
+    newCreated = false;
     editingId = scene.id;
     editTitle = scene.title;
-    await new Promise((res) => setTimeout(res, 50));
     await tick();
-    inputRef?.focus();
+    inputRef?.select();
+    inputRef?.scrollIntoView({ behavior: 'smooth' });
   }
 
   function saveEdit() {
@@ -118,7 +125,7 @@
       </div>
       {scene.title}
     </h1>
-    <div class="mt-1 font-mono text-xs text-muted-foreground">
+    <div class="text-muted-foreground mt-1 font-mono text-xs">
       {formatTime(scene.time)}
     </div>
   {/if}

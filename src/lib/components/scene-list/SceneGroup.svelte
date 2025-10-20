@@ -9,7 +9,7 @@
   import EllipsisVertical from '@lucide/svelte/icons/ellipsis-vertical';
   import Pencil from '@lucide/svelte/icons/pencil';
   import Trash from '@lucide/svelte/icons/trash';
-  import { tick } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { dndzone, type DndEvent } from 'svelte-dnd-action';
   import { flip } from 'svelte/animate';
 
@@ -19,6 +19,7 @@
     dragDisabled: boolean;
     editingId: string | null;
     dropFromOthersDisabled: boolean;
+    newCreated: boolean;
     onJumpToScene: (time: number) => void;
     onDeleteScene: (id: string) => void;
     onDeleteGroup: () => void;
@@ -30,6 +31,7 @@
     dragDisabled,
     editingId = $bindable(null),
     dropFromOthersDisabled,
+    newCreated = $bindable(),
     onDeleteScene,
     onJumpToScene,
     onDeleteGroup,
@@ -41,16 +43,21 @@
   let deleteDialogOpen = $state(false);
   let dropdownAnchor = $state<HTMLElement | null>(null);
   let dialogAnchor = $state<HTMLElement | null>(null);
-  let inputRef = $state<HTMLElement | null>(null);
+  let inputRef = $state<HTMLInputElement | null>(null);
 
   const isEditGroup = $derived(editingId === group.id);
 
+  onMount(() => {
+    if (newCreated) startEdit();
+  });
+
   async function startEdit() {
+    newCreated = false;
     editingId = group.id;
     editGroupName = group.name ?? '';
-    await new Promise((res) => setTimeout(res, 50));
     await tick();
-    inputRef?.focus();
+    inputRef?.select();
+    inputRef?.scrollIntoView({ behavior: 'smooth' });
   }
 
   function saveEdit() {
@@ -98,12 +105,8 @@
       </div>
     </div>
   {:else}
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      ondblclick={startEdit}
-      class="flex w-full items-center justify-between pb-2 pl-2 text-left"
-    >
-      <h3 class="text-foreground font-semibold">{group.name}</h3>
+    <div class="flex w-full items-center justify-between pb-2 pl-2 text-left">
+      <h1 ondblclick={startEdit} class="text-foreground font-semibold">{group.name}</h1>
       <div class="flex items-center">
         <Button
           variant="ghost"
@@ -141,9 +144,10 @@
       class="h-full min-h-10 space-y-2 outline-none"
     >
       {#each items as item (item.id)}
-        <div animate:flip={{ duration: 300 }}>
+        <div id={item.id} animate:flip={{ duration: 300 }}>
           <SceneCard
             bind:editingId
+            bind:newCreated={item.new}
             locked={dragDisabled}
             bind:scene={item.scene}
             {onJumpToScene}

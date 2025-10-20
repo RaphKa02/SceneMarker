@@ -53,7 +53,7 @@ class KeyHandler {
   handle(e: KeyboardEvent) {
     if (
       this.#disabled ||
-      e.target instanceof HTMLInputElement ||
+      (e.target instanceof HTMLInputElement && e.target.type === 'text') ||
       e.target instanceof HTMLTextAreaElement ||
       e.target instanceof HTMLSelectElement
     ) {

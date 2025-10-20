@@ -27,7 +27,7 @@ class AppState implements LibState {
   settings = $state<SettingsState>({
     theme: 'dark',
     openLastProjectOnStartup: false,
-    itemPlaceLocation: 'top',
+    itemPlaceLocation: 'bottom',
     skipIntervall: '5',
   });
 

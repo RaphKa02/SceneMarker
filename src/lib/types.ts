@@ -13,6 +13,7 @@ export interface SceneListItemScene {
   id: string;
   type: 'scene';
   scene: Scene;
+  new: boolean;
 }
 
 export interface SceneListItemGroup {
@@ -20,6 +21,7 @@ export interface SceneListItemGroup {
   type: 'group';
   group: Group;
   items: SceneListItemScene[];
+  new: boolean;
 }
 
 export type SceneListItem = SceneListItemScene | SceneListItemGroup;

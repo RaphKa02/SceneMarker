@@ -72,11 +72,12 @@
   class="flex min-h-full flex-col gap-2"
 >
   {#each filteredItems as item (item.id)}
-    <div animate:flip={{ duration: 300 }}>
+    <div id={item.id} animate:flip={{ duration: 300 }}>
       {#if item.type === 'group'}
         <SceneGroup
           bind:group={item.group}
           bind:items={item.items}
+          bind:newCreated={item.new}
           dragDisabled={locked || searchQuery.trim() !== ''}
           dropFromOthersDisabled={isDraggingGroup}
           bind:editingId
@@ -89,6 +90,7 @@
         <SceneCard
           bind:scene={item.scene}
           bind:editingId
+          bind:newCreated={item.new}
           {locked}
           {onJumpToScene}
           onDeleteScene={() => deleteItem(item.id)}
