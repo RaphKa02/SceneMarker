@@ -27,4 +27,16 @@
 
 - Fix save permission after startup with project file
 
-## 0.1.5
+## 0.2.0
+
+- Organize scenes in folder
+- Project file backwards compatibility
+
+## 0.2.1
+
+- Fix save location in save dialog
+
+## 0.2.2
+
+- Settingspage (about, general settings, keyboard remap)
+- Presentationmode
