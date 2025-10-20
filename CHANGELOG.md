@@ -40,3 +40,7 @@
 
 - Settingspage (about, general settings, keyboard remap)
 - Presentationmode
+
+## 0.2.3
+
+- Improve usability when creating new items
