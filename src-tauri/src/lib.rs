@@ -1,5 +1,7 @@
 use std::env;
 
+use tauri::Manager;
+
 mod utils;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -18,6 +20,18 @@ pub fn run() {
             utils::write_logs,
             utils::create_logs_dir
         ])
+        .on_window_event(|window, event| match event {
+            tauri::WindowEvent::Destroyed => {
+                if window.label() == "main" {
+                    let app = window.app_handle();
+                    for (_label, w) in app.webview_windows() {
+                        let _ = w.destroy();
+                    }
+                    app.exit(0);
+                }
+            }
+            _ => {}
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

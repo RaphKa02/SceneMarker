@@ -10,11 +10,18 @@
   import logger from '$lib/logger';
   import { convertProject } from '$lib/migrationManager';
   import { appState } from '$lib/state.svelte';
-  import type { SceneListItem } from '$lib/types';
+  import type { SceneListItem, VideoState } from '$lib/types';
   import { convertFile } from '$utils';
   import Eye from '@lucide/svelte/icons/eye';
   import { invoke } from '@tauri-apps/api/core';
-  import { getCurrentWindow } from '@tauri-apps/api/window';
+  import { emitTo } from '@tauri-apps/api/event';
+  import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
+  import {
+      availableMonitors,
+      currentMonitor,
+      getAllWindows,
+      getCurrentWindow,
+  } from '@tauri-apps/api/window';
   import { ask, open, save } from '@tauri-apps/plugin-dialog';
   import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
   import { onMount, tick } from 'svelte';
@@ -22,6 +29,7 @@
   import { dev, number, version } from '../build.json';
 
   let isResizing = $state(false);
+  let presentationWindow = $state<WebviewWindow>();
 
   onMount(() => {
     logger.log(`SceneMarker ${version} ${number}`);
@@ -207,6 +215,12 @@
 
   function jumpToScene(time: number) {
     appState.project.currentTime = time;
+
+    emitTo<VideoState>('presentation', 'video-state-update', {
+      videoPath: appState.project.videoPath,
+      currentTime: time,
+      playing: appState.playing,
+    });
   }
 
   function addGroup() {
@@ -247,6 +261,62 @@
     document.removeEventListener('mousemove', resize);
     document.removeEventListener('mouseup', stopResizing);
   }
+
+  async function togglePresentationMode() {
+    const windows = await getAllWindows();
+    let presentationWindow = windows.find((window) => window.label === 'presentation');
+
+    if (appState.isPresentationMode) {
+      presentationWindow?.close();
+      appState.isPresentationMode = false;
+      return;
+    }
+
+    if (presentationWindow) {
+      appState.isPresentationMode = true;
+      return;
+    }
+
+    const monitors = await availableMonitors();
+    const currentM = await currentMonitor();
+
+    const targetMonitor = monitors.find((monitor) => monitor.name !== currentM?.name);
+    if (!targetMonitor) {
+      toast.warning('Kein weiterer Monitor gefunden', {
+        description: 'Versuche mit Windows+P den Modus auf "Erweitern" zu stellen',
+      });
+      return;
+    }
+
+    presentationWindow = new WebviewWindow('presentation', {
+      url: '/presentation',
+      title: 'Presentation View',
+      fullscreen: true,
+      resizable: false,
+      decorations: false,
+      visible: true,
+      x: targetMonitor.position.x,
+      y: targetMonitor.position.y,
+    });
+
+    presentationWindow.once('tauri://created', () => {
+      appState.isPresentationMode = true;
+    });
+    presentationWindow.once('tauri://destroyed', () => {
+      appState.isPresentationMode = false;
+    });
+    presentationWindow.once('tauri://error', (e) => {
+      logger.log('an error happened creating the webview', String(e.payload));
+      appState.isPresentationMode = false;
+    });
+    presentationWindow.once('ready', () => {
+      emitTo<VideoState>('presentation', 'video-state-update', {
+        videoPath: appState.project.videoPath,
+        currentTime: appState.project.currentTime,
+        playing: appState.playing,
+      });
+    });
+  }
 </script>
 
 <svelte:window
@@ -260,7 +330,7 @@
 
 <WindowControlls />
 
-<div class="flex h-screen flex-col bg-background-dark">
+<div class="bg-background-dark flex h-screen flex-col">
   <TopBar
     projectName={appState.project.filePath?.split(/[\\/]/).pop() ?? null}
     onOpenVideo={openVideoDialog}
@@ -275,6 +345,7 @@
         videoPath={appState.project.videoPath}
         bind:currentTime={appState.project.currentTime}
         onRelocateVideo={() => openVideoDialog(false)}
+        onTogglePresenationMode={togglePresentationMode}
       />
     </main>
 

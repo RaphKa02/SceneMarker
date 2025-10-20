@@ -8,6 +8,8 @@ class AppState implements LibState {
   updateAvailable = $state(false);
   showUpdatePopup = $state(true);
   projectModified = $state(false);
+  isPresentationMode = $state(false);
+  playing = $state(false);
   project = $state<Project>({
     version: '',
     filePath: undefined,

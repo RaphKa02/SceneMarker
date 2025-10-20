@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main"],
+  "windows": ["main", "presentation"],
   "permissions": [
     "core:default",
     "core:window:allow-destroy",
@@ -39,6 +39,14 @@
     },
     "process:default",
     "os:default",
-    "store:default"
+    "store:default",
+    "core:webview:allow-create-webview-window",
+    "core:webview:allow-webview-close",
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    "core:event:allow-emit-to",
+    "core:window:allow-current-monitor",
+    "core:window:allow-available-monitors",
+    "core:window:allow-get-all-windows"
   ]
 }

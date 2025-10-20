@@ -37,7 +37,15 @@ export interface LibState {
   updateAvailable: boolean;
   showUpdatePopup: boolean;
   projectModified: boolean;
+  isPresentationMode: boolean;
+  playing: boolean;
   project: Project;
+}
+
+export interface VideoState {
+  videoPath: string | undefined;
+  playing: boolean;
+  currentTime: number;
 }
 
 export interface UiState {

@@ -2,25 +2,43 @@
   import { Button } from '$components/ui/button';
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import { appState } from '$lib/state.svelte';
+  import type { VideoState } from '$lib/types';
   import { formatTime } from '$utils';
-  import { onMount } from 'svelte';
+  import Expand from '@lucide/svelte/icons/expand';
+  import Monitor from '@lucide/svelte/icons/monitor';
+  import MonitorOff from '@lucide/svelte/icons/monitor-off';
+  import Pause from '@lucide/svelte/icons/pause';
+  import Play from '@lucide/svelte/icons/play';
+  import Volume from '@lucide/svelte/icons/volume';
+  import Volume1 from '@lucide/svelte/icons/volume-1';
+  import Volume2 from '@lucide/svelte/icons/volume-2';
+  import VolumeOff from '@lucide/svelte/icons/volume-off';
+  import VolumeX from '@lucide/svelte/icons/volume-x';
+  import { emitTo } from '@tauri-apps/api/event';
+  import { onMount, untrack } from 'svelte';
 
   interface Props {
     videoPath?: string;
     currentTime: number;
     onRelocateVideo?: () => void;
+    onTogglePresenationMode?: () => void;
   }
 
-  let { videoPath, currentTime = $bindable(0), onRelocateVideo }: Props = $props();
+  let {
+    videoPath,
+    currentTime = $bindable(0),
+    onRelocateVideo,
+    onTogglePresenationMode,
+  }: Props = $props();
 
   let videoElement = $state<HTMLVideoElement | null>(null);
   let hasVideoError = $state(false);
 
-  let isPlaying = $state(false);
   let duration = $state(0);
   let volume = $state(1);
   let isMuted = $state(false);
   let isFullscreen = $state(false);
+  let videoState = $state<VideoState>({ videoPath: undefined, playing: false, currentTime: 0 });
 
   let controllInterval = $state<number>();
   let showControlls = $state(false);
@@ -33,11 +51,19 @@
   });
 
   $effect(() => {
+    console.log('emit');
     if (videoPath) hasVideoError = false;
+    videoState.videoPath = videoPath;
+
+    emitTo(
+      'presentation',
+      'video-state-update',
+      untrack(() => videoState)
+    );
   });
 
   function togglePlay() {
-    if (isPlaying) {
+    if (videoState.playing) {
       videoElement?.pause();
     } else {
       videoElement?.play();
@@ -49,22 +75,31 @@
   }
 
   function handlePlay() {
-    isPlaying = true;
+    videoState.playing = true;
+    appState.playing = true;
+    videoState.currentTime = currentTime;
+    emitTo('presentation', 'video-state-update', videoState);
   }
 
   function handlePause() {
-    isPlaying = false;
+    videoState.playing = false;
+    appState.playing = false;
+    videoState.currentTime = currentTime;
+    emitTo('presentation', 'video-state-update', videoState);
   }
 
   function seekTo(time: number) {
     if (videoElement) {
       videoElement.currentTime = time;
+      videoState.currentTime = time;
+      emitTo('presentation', 'video-state-update', videoState);
     }
   }
 
   function skip(seconds: number) {
     if (videoElement) {
-      videoElement.currentTime = Math.max(0, Math.min(duration, currentTime + seconds));
+      videoState.currentTime = Math.max(0, Math.min(duration, currentTime + seconds));
+      videoElement.currentTime = videoState.currentTime;
     }
   }
 
@@ -92,7 +127,7 @@
   }
 
   function handleVideoClick() {
-    isPlaying ? videoElement?.pause() : videoElement?.play();
+    videoState.playing ? videoElement?.pause() : videoElement?.play();
     restartControllsInterval();
   }
 
@@ -108,7 +143,7 @@
 
   function addActions() {
     keyHandler.registerAction('play-pause', () => {
-      if (videoElement) isPlaying ? videoElement.pause() : videoElement.play();
+      if (videoElement) videoState.playing ? videoElement.pause() : videoElement.play();
     });
     keyHandler.registerAction('skip-back', () => skip(-Number(appState.settings.skipIntervall)));
     keyHandler.registerAction('skip-forward', () => skip(Number(appState.settings.skipIntervall)));
@@ -122,7 +157,7 @@
 </script>
 
 <div class="relative flex flex-col overflow-hidden rounded-lg bg-black shadow-2xl">
-  {#if videoPath && !hasVideoError}
+  {#if videoState.videoPath && !hasVideoError}
     <video
       bind:this={videoElement}
       bind:currentTime
@@ -133,13 +168,12 @@
       onerror={(e) => {
         hasVideoError = true;
       }}
-      src={videoPath}
+      src={videoState.videoPath}
       onclick={handleVideoClick}
       onmouseenter={handleMouseEnter}
     >
       <track kind="captions" />
     </video>
-
     <div
       class={[
         'bg-background absolute bottom-0 w-full space-y-3 p-4 opacity-0 transition-opacity hover:opacity-100',
@@ -148,7 +182,9 @@
     >
       <!-- Zeitachse -->
       <div class="flex items-center gap-3">
-        <span class="text-muted-foreground w-16 text-right text-sm">{formatTime(currentTime)}</span>
+        <span class="text-muted-foreground w-16 text-right text-sm">
+          {formatTime(currentTime)}
+        </span>
         <input
           type="range"
           min="0"
@@ -168,14 +204,10 @@
             onclick={togglePlay}
             class="hover:bg-input text-primary rounded p-2 transition-colors"
           >
-            {#if isPlaying}
-              <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-              </svg>
+            {#if videoState.playing}
+              <Pause class="size-6" />
             {:else}
-              <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
+              <Play class="size-6" />
             {/if}
           </button>
 
@@ -204,25 +236,31 @@
         </div>
 
         <div class="flex items-center gap-3">
+          <button
+            onclick={onTogglePresenationMode}
+            class="hover:bg-input rounded p-2 transition-colors"
+            aria-label="presentation"
+            title="Starte/Stoppe den Präsentationsmodus"
+          >
+            {#if appState.isPresentationMode}
+              <MonitorOff class="size-5" />
+            {:else}
+              <Monitor class="size-5" />
+            {/if}
+          </button>
           <!-- Lautstärke -->
           <div class="flex items-center gap-2">
             <button onclick={toggleMute} class="hover:bg-input rounded p-2 transition-colors">
-              {#if isMuted || volume === 0}
-                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path
-                    d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"
-                  />
-                </svg>
-              {:else if volume < 0.5}
-                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M7 9v6h4l5 5V4l-5 5H7z" />
-                </svg>
+              {#if isMuted}
+                <VolumeOff class="size-5" />
+              {:else if volume === 0}
+                <VolumeX class="size-5" />
+              {:else if volume < 0.3}
+                <Volume class="size-5" />
+              {:else if volume < 0.6}
+                <Volume1 class="size-5" />
               {:else}
-                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path
-                    d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"
-                  />
-                </svg>
+                <Volume2 class="size-5" />
               {/if}
             </button>
             <input
@@ -241,14 +279,7 @@
             class="hover:bg-input rounded p-2 transition-colors"
             aria-label="fullscreen"
           >
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
-              />
-            </svg>
+            <Expand class="size-5" />
           </button>
         </div>
       </div>
@@ -280,7 +311,7 @@
           }}
           class="bg-primary text-primary-foreground hover:bg-primary flex cursor-pointer items-center gap-2 rounded-lg px-6 py-3 font-semibold transition-colors"
         >
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
