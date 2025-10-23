@@ -1,6 +1,7 @@
 import type { Store } from '@tauri-apps/plugin-store';
 import { setMode } from 'mode-watcher';
-import type { LibState, Project, SettingsState, UiState } from './types';
+import { SvelteMap } from 'svelte/reactivity';
+import type { LibState, Project, ProjectMetadata, SettingsState, UiState } from './types';
 
 class AppState implements LibState {
   version = $state('');
@@ -10,11 +11,12 @@ class AppState implements LibState {
   projectModified = $state(false);
   isPresentationMode = $state(false);
   playing = $state(false);
+  currentTime = $state(0);
+  recentProjects = new SvelteMap<string, ProjectMetadata>([]);
   project = $state<Project>({
     version: '',
     filePath: undefined,
     videoPath: undefined,
-    currentTime: 0,
     sceneListItems: [],
   });
   uiState = $state<UiState>({
@@ -45,6 +47,13 @@ class AppState implements LibState {
           this.#store.set('settingsState', this.settings);
         }
       });
+
+      $effect(() => {
+        if (this.#store) {
+          this.#store.set('recentProjects', this.recentProjects.values().toArray());
+        }
+      });
+
       $effect(() => {
         setMode(this.settings.theme);
       });
@@ -52,10 +61,7 @@ class AppState implements LibState {
   }
 
   empty = $derived(
-    !this.project.filePath &&
-      !this.project.videoPath &&
-      this.project.currentTime === 0 &&
-      this.project.sceneListItems.length === 0
+    !this.project.filePath && !this.project.videoPath && this.project.sceneListItems.length === 0
   );
 
   sceneCount = $derived(
@@ -79,9 +85,11 @@ class AppState implements LibState {
   async setStore(store: Store) {
     const uiState = await store.get<UiState>('uiState');
     const settingsState = await store.get<SettingsState>('settingsState');
+    const recentProjects = (await store.get<ProjectMetadata[]>('recentProjects')) ?? [];
 
     if (uiState) this.uiState = uiState;
     if (settingsState) this.settings = settingsState;
+    this.recentProjects = new SvelteMap(recentProjects.map((p) => [p.path, p]));
 
     this.#store = store;
   }

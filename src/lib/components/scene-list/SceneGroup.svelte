@@ -111,7 +111,7 @@
         <Button
           variant="ghost"
           size="sm"
-          class="text-primary-foreground opacity-0 transition-transform group-hover/sg:opacity-100"
+          class="text-foreground opacity-0 transition-transform group-hover/sg:opacity-100"
           aria-label="Open dropdown"
           onclick={stopPropagation(() => (dropdownOpen = true))}
           bind:ref={dropdownAnchor}

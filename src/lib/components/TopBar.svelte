@@ -1,8 +1,15 @@
 <script lang="ts">
   import { Button } from '$components/ui/button';
+  import * as DropdownMenu from '$components/ui/dropdown-menu';
+  import * as Popover from '$components/ui/popover';
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import { appState } from '$lib/state.svelte';
+  import { stopPropagation } from '$utils';
+  import ChevronDown from '@lucide/svelte/icons/chevron-down';
+  import FolderOpen from '@lucide/svelte/icons/folder-open';
   import Save from '@lucide/svelte/icons/save';
+  import Video from '@lucide/svelte/icons/video';
+  import X from '@lucide/svelte/icons/x';
 
   interface Props {
     projectName: string | null;
@@ -10,9 +17,27 @@
     onSaveProject: () => void;
     onSaveProjectAt: () => void;
     onLoadProject: () => void;
+    onLoadProjectFromPath: (path: string) => void;
   }
 
-  let { projectName, onOpenVideo, onSaveProject, onSaveProjectAt, onLoadProject }: Props = $props();
+  let {
+    projectName,
+    onOpenVideo,
+    onSaveProject,
+    onSaveProjectAt,
+    onLoadProject,
+    onLoadProjectFromPath,
+  }: Props = $props();
+
+  let deleteDialogOpen = $state(false);
+  let projectToDelete = $state<string>();
+  let dialogAnchor = $state<HTMLElement | null>(null);
+
+  function onDeleteProjectMetadata() {
+    appState.recentProjects.delete(projectToDelete!);
+    deleteDialogOpen = false;
+    projectToDelete = undefined;
+  }
 </script>
 
 <div
@@ -21,43 +46,82 @@
 >
   <div class="mr-4 flex items-center gap-2">
     <div
-      class="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded font-bold"
+      class="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded font-bold"
     >
       SM
     </div>
     <h1 class="text-lg font-bold">SceneMarker</h1>
   </div>
 
-  <Button
-    onclick={onOpenVideo}
-    variant="outline"
-    title={keyHandler.getKeyCombo('open-video-dialog', true)}
-  >
-    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        stroke-width="2"
-        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-      />
-    </svg>
-    Video öffnen
-  </Button>
+  <DropdownMenu.Root>
+    <DropdownMenu.Trigger>
+      {#snippet child({ props })}
+        <Button {...props} variant="outline">
+          Letzte Projekte <ChevronDown />
+        </Button>
+      {/snippet}
+    </DropdownMenu.Trigger>
+    <DropdownMenu.Content align="start" class="max-h-72">
+      <DropdownMenu.Group>
+        {#each [...appState.recentProjects.entries()].sort(([_, a], [__, b]) => (b.lastAccessed ?? 0) - (a.lastAccessed ?? 0)) as [key, project] (key)}
+          <DropdownMenu.Item
+            class="group justify-between gap-2 overflow-hidden"
+            onclick={() => onLoadProjectFromPath(project.path)}
+          >
+            <div>
+              <p class="text-sm leading-tight font-semibold">{project.path.split(/[\\/]/).pop()}</p>
+              <p class="text-muted-foreground max-w-full truncate text-xs leading-tight">
+                {project.path}
+              </p>
+              {#if project.lastModified}
+                <p class="text-muted-foreground text-xs leading-tight">
+                  Zuletzt geändert:
+                  {new Date(project.lastModified).toLocaleString(undefined, {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+              {/if}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              class="ring-0"
+              onclick={stopPropagation((e) => {
+                deleteDialogOpen = true;
+                projectToDelete = project.path;
+                dialogAnchor = e.target as HTMLElement;
+              })}
+            >
+              <X class="text-destructive size-4 opacity-0 group-hover:opacity-100" />
+            </Button>
+          </DropdownMenu.Item>
+        {:else}
+          <DropdownMenu.Item disabled>keine Projekte</DropdownMenu.Item>
+        {/each}
+      </DropdownMenu.Group>
+    </DropdownMenu.Content>
+  </DropdownMenu.Root>
 
   <Button
     onclick={onLoadProject}
     variant="outline"
     title={keyHandler.getKeyCombo('load-project', true)}
   >
-    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        stroke-width="2"
-        d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"
-      />
-    </svg>
+    <FolderOpen class="size-4" />
     Projekt laden
+  </Button>
+
+  <Button
+    onclick={onOpenVideo}
+    variant="outline"
+    title={keyHandler.getKeyCombo('open-video-dialog', true)}
+  >
+    <Video class="size-4" />
+    Video öffnen
   </Button>
 
   <Button
@@ -92,3 +156,18 @@
     <p class="text-muted-foreground">Neues Projekt</p>
   {/if}
 </div>
+
+<Popover.Root bind:open={deleteDialogOpen}>
+  <Popover.Content customAnchor={dialogAnchor} class="space-y-4">
+    <div class="space-y-2">
+      <h4 class="text-xl">Löschen</h4>
+      <p class="text-muted-foreground text-sm">Möchtest du diesen Eintrag wirklich löschen?</p>
+    </div>
+    <div class="flex gap-4">
+      <Button class="flex-1" variant="destructive" onclick={onDeleteProjectMetadata}>Ja</Button>
+      <Button class="flex-1" variant="outline" onclick={() => (deleteDialogOpen = false)}>
+        Nein
+      </Button>
+    </div>
+  </Popover.Content>
+</Popover.Root>

@@ -30,7 +30,6 @@ export interface Project {
   version: string;
   filePath: string | undefined;
   videoPath: string | undefined;
-  currentTime: number;
   sceneListItems: SceneListItem[];
 }
 
@@ -40,6 +39,7 @@ export interface LibState {
   showUpdatePopup: boolean;
   projectModified: boolean;
   isPresentationMode: boolean;
+  currentTime: number;
   playing: boolean;
   project: Project;
 }
@@ -64,4 +64,10 @@ export interface SettingsState {
   openLastProjectOnStartup: boolean;
   itemPlaceLocation: 'top' | 'bottom';
   skipIntervall: string;
+}
+
+export interface ProjectMetadata {
+  path: string;
+  lastModified: number | undefined;
+  lastAccessed: number | undefined;
 }

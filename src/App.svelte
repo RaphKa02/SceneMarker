@@ -107,11 +107,12 @@
         if (reset) {
           appState.project = {
             version,
-            currentTime: 0,
             sceneListItems: [],
             videoPath: undefined,
             filePath: undefined,
           };
+          appState.currentTime = 0;
+          appState.playing = false;
         }
         const convertedPath = convertFile(selected);
         if (!convertedPath) toast.error('Fehler beim Laden des Videos');
@@ -124,14 +125,20 @@
   }
 
   async function saveProject() {
-    if (!appState.project.filePath) return saveProjectAt();
+    const filePath = appState.project.filePath;
+    if (!filePath) return saveProjectAt();
 
     appState.project.version = version;
 
     try {
-      await writeTextFile(appState.project.filePath, JSON.stringify(appState.project, null, 2));
+      await writeTextFile(filePath, JSON.stringify(appState.project, null, 2));
       appState.projectModified = false;
-      logger.log('Projekt unter', appState.project.filePath, 'gespeichert');
+      appState.recentProjects.set(filePath, {
+        path: filePath,
+        lastModified: Date.now(),
+        lastAccessed: Date.now(),
+      });
+      logger.log('Projekt unter', filePath, 'gespeichert');
       toast.success('Gespeichert');
     } catch (err) {
       logger.error('Fehler beim Speichern:', String(err));
@@ -187,15 +194,20 @@
       const content = await readTextFile(filePath);
       const { project, migrated } = convertProject(JSON.parse(content), version);
       appState.project = project;
+
+      const projectMetadata = appState.recentProjects.get(filePath);
+      appState.recentProjects.set(filePath, {
+        path: filePath,
+        lastAccessed: Date.now(),
+        lastModified: projectMetadata?.lastModified,
+      });
       await tick();
       appState.projectModified = migrated;
     } catch (err) {
       logger.error(`Fehler beim Laden der Projektdatei: ${err}`);
       toast.error('Fehler beim Öffnen', {
-        description: 'Möglicherweise wurde die Datei geändert und ist nun beschädigt',
-        dismiss: false,
-        dismissable: true,
-        closeButton: true,
+        description:
+          'Möglicherweise wurde die Datei geändert und ist nun beschädigt oder wurde gelöscht',
       });
     }
   }
@@ -207,14 +219,14 @@
       scene: {
         id: crypto.randomUUID(),
         title: `Szene ${appState.sceneCount + 1}`,
-        time: appState.project.currentTime,
+        time: appState.currentTime,
       },
       new: true,
     });
   }
 
   function jumpToScene(time: number) {
-    appState.project.currentTime = time;
+    appState.currentTime = time;
 
     emitTo<VideoState>('presentation', 'video-state-update', {
       videoPath: appState.project.videoPath,
@@ -313,7 +325,7 @@
     presentationWindow.once('ready', () => {
       emitTo<VideoState>('presentation', 'video-state-update', {
         videoPath: appState.project.videoPath,
-        currentTime: appState.project.currentTime,
+        currentTime: appState.currentTime,
         playing: appState.playing,
       });
     });
@@ -338,13 +350,14 @@
     onSaveProject={saveProject}
     onSaveProjectAt={saveProjectAt}
     onLoadProject={loadProject}
+    onLoadProjectFromPath={loadProjectFromPath}
   />
 
   <div class="flex flex-1 overflow-hidden">
     <main class="flex flex-1 flex-col p-4">
       <VideoPlayer
         videoPath={appState.project.videoPath}
-        bind:currentTime={appState.project.currentTime}
+        bind:currentTime={appState.currentTime}
         onRelocateVideo={() => openVideoDialog(false)}
         onTogglePresenationMode={togglePresentationMode}
       />

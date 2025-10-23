@@ -11,7 +11,7 @@
   --foreground: oklch(0.208 0.042 265.755);
   --card: oklch(0.98 0.005 247.858);
   --card-foreground: oklch(0.208 0.042 265.755);
-  --popover: oklch(1 0 0);
+  --popover: oklch(0.98 0.005 247.858);
   --popover-foreground: oklch(0.208 0.042 265.755);
   --primary: oklch(0.494 0.2482 266.76);
   --primary-foreground: oklch(0.984 0.003 247.858);
@@ -46,7 +46,7 @@
   --foreground: oklch(0.984 0.003 247.858);
   --card: oklch(35.054% 0.03275 260.956);
   --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(21% 0.034 264.665);
+  --popover: oklch(25.054% 0.03275 260.956);
   --popover-foreground: oklch(0.984 0.003 247.858);
   --primary: oklch(0.494 0.2482 266.76);
   --primary-foreground: oklch(0.984 0.003 247.858);
@@ -147,6 +147,6 @@
   /* Better focus styles */
   input:focus,
   button:focus {
-    @apply ring-2 ring-primary/30 outline-none;
+    @apply ring-primary/30 ring-2 outline-none;
   }
 }

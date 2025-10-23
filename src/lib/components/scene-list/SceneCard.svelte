@@ -63,7 +63,7 @@
   }
 
   function updateSceneTime() {
-    scene.time = appState.project.currentTime;
+    scene.time = appState.currentTime;
   }
 </script>
 
@@ -115,7 +115,7 @@
         <Button
           variant="ghost"
           size="sm"
-          class="text-primary-foreground px-0! opacity-0 group-hover/sc:opacity-100"
+          class="text-foreground px-0! opacity-0 group-hover/sc:opacity-100"
           aria-label="Open dropdown"
           onclick={stopPropagation(() => (dropdownOpen = true))}
           bind:ref={dropdownAnchor}
