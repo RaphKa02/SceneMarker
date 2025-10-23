@@ -25,8 +25,8 @@ export function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export function preventDefault(fn?: (event: MouseEvent) => void) {
-  return function (event: MouseEvent) {
+export function preventDefault<T extends Event>(fn?: (event: T) => void) {
+  return function (event: T) {
     event.preventDefault();
     fn?.(event);
   };
@@ -39,8 +39,8 @@ export function stopPropagation(fn?: (event: MouseEvent) => void) {
   };
 }
 
-export function once(fn?: (event: MouseEvent) => void) {
-  return function (event: MouseEvent) {
+export function once<T extends Event>(fn?: (event: T) => void) {
+  return function (event: T) {
     fn?.(event);
     fn = undefined;
   };

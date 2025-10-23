@@ -56,6 +56,7 @@ export interface UiState {
   lockSidebar: boolean;
   showSettings: boolean;
   settingsTab: string;
+  showTimelineMarkers: boolean;
 }
 
 export interface SettingsState {

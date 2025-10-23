@@ -23,6 +23,7 @@ class AppState implements LibState {
     lockSidebar: false,
     showSettings: false,
     settingsTab: '',
+    showTimelineMarkers: true,
   });
   settings = $state<SettingsState>({
     theme: 'dark',

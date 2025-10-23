@@ -1,10 +1,12 @@
 <script lang="ts">
+  import TimelineMarker from '$components/TimelineMarker.svelte';
   import { Button } from '$components/ui/button';
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import { appState } from '$lib/state.svelte';
-  import type { VideoState } from '$lib/types';
-  import { formatTime } from '$utils';
+  import type { SceneListItemScene, VideoState } from '$lib/types';
+  import { formatTime, preventDefault } from '$utils';
   import Expand from '@lucide/svelte/icons/expand';
+  import Flag from '@lucide/svelte/icons/flag';
   import Monitor from '@lucide/svelte/icons/monitor';
   import MonitorOff from '@lucide/svelte/icons/monitor-off';
   import Pause from '@lucide/svelte/icons/pause';
@@ -15,7 +17,7 @@
   import VolumeOff from '@lucide/svelte/icons/volume-off';
   import VolumeX from '@lucide/svelte/icons/volume-x';
   import { emitTo } from '@tauri-apps/api/event';
-  import { onMount, untrack } from 'svelte';
+  import { onMount, tick, untrack } from 'svelte';
 
   interface Props {
     videoPath?: string;
@@ -43,7 +45,32 @@
   let controllInterval = $state<number>();
   let showControlls = $state(false);
 
+  let lastSeekTime = $state(0);
+
+  let sliderValue = $state(currentTime);
+  const sliderProgress = $derived((sliderValue / duration) * 100);
+  const sliderBackground = $derived(
+    `linear-gradient(to right, var(--color-primary) ${sliderProgress}%, var(--color-input) ${sliderProgress}%)`
+  );
+
   const skipIntervals = [0.03, 1, 3, 5, 10, 60];
+
+  const filteredScenes = $derived.by(() => {
+    const scenes = appState.project.sceneListItems.flatMap((item) =>
+      item.type === 'scene' ? [item] : item.items
+    );
+
+    scenes.sort((a, b) => a.scene.time - b.scene.time);
+
+    const groups: Record<number, SceneListItemScene[]> = {};
+    for (const s of scenes) {
+      const time = s.scene.time;
+      if (!groups[time]) groups[time] = [];
+      groups[time].push(s);
+    }
+
+    return Object.values(groups);
+  });
 
   onMount(() => {
     addActions();
@@ -51,7 +78,6 @@
   });
 
   $effect(() => {
-    console.log('emit');
     if (videoPath) hasVideoError = false;
     videoState.videoPath = videoPath;
 
@@ -62,6 +88,10 @@
     );
   });
 
+  $effect(() => {
+    sliderValue = currentTime;
+  });
+
   function togglePlay() {
     if (videoState.playing) {
       videoElement?.pause();
@@ -70,7 +100,7 @@
     }
   }
 
-  function handleLoadedMetadata() {
+  async function handleLoadedMetadata() {
     duration = videoElement?.duration ?? 0;
   }
 
@@ -86,6 +116,14 @@
     appState.playing = false;
     videoState.currentTime = currentTime;
     emitTo('presentation', 'video-state-update', videoState);
+  }
+
+  function throttledSeekTo(value: number) {
+    const now = Date.now();
+    if (now - lastSeekTime >= 400) {
+      seekTo(value);
+      lastSeekTime = now;
+    }
   }
 
   function seekTo(time: number) {
@@ -127,7 +165,7 @@
   }
 
   function handleVideoClick() {
-    videoState.playing ? videoElement?.pause() : videoElement?.play();
+    if (!isFullscreen) videoState.playing ? videoElement?.pause() : videoElement?.play();
     restartControllsInterval();
   }
 
@@ -143,7 +181,8 @@
 
   function addActions() {
     keyHandler.registerAction('play-pause', () => {
-      if (videoElement) videoState.playing ? videoElement.pause() : videoElement.play();
+      if (videoElement && !isFullscreen)
+        videoState.playing ? videoElement.pause() : videoElement.play();
     });
     keyHandler.registerAction('skip-back', () => skip(-Number(appState.settings.skipIntervall)));
     keyHandler.registerAction('skip-forward', () => skip(Number(appState.settings.skipIntervall)));
@@ -176,7 +215,7 @@
     </video>
     <div
       class={[
-        'bg-background absolute bottom-0 w-full space-y-3 p-4 opacity-0 transition-opacity hover:opacity-100',
+        'bg-background absolute bottom-0 w-full space-y-3 p-4 opacity-0 transition-opacity focus-within:opacity-100 hover:opacity-100',
         showControlls && 'opacity-100',
       ]}
     >
@@ -185,20 +224,42 @@
         <span class="text-muted-foreground w-16 text-right text-sm">
           {formatTime(currentTime)}
         </span>
-        <input
-          type="range"
-          min="0"
-          max={duration}
-          value={currentTime}
-          oninput={(e) => seekTo(parseFloat((e.target as HTMLInputElement).value))}
-          class="bg-input [&::-webkit-slider-thumb]:bg-primary h-2 flex-1 cursor-pointer appearance-none rounded-lg [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full"
-        />
+        <div class="relative flex-1">
+          {#if appState.uiState.showTimelineMarkers}
+            <div class="pointer-events-none absolute -top-8 right-0 left-0 mx-2 h-8">
+              <div class="relative h-full">
+                {#each filteredScenes as sceneItems (sceneItems[0].scene.time)}
+                  <TimelineMarker
+                    scenes={sceneItems}
+                    {duration}
+                    hidden={false}
+                    onclick={() => seekTo(sceneItems[0].scene.time)}
+                  />
+                {/each}
+              </div>
+            </div>
+          {/if}
+
+          <div class="flex h-2 w-full justify-center">
+            <input
+              type="range"
+              step="0.01"
+              min="0"
+              max={duration}
+              bind:value={sliderValue}
+              oninput={(e) => throttledSeekTo(parseFloat((e.target as HTMLInputElement).value))}
+              class="[&::-webkit-slider-thumb]:bg-primary h-full w-full cursor-pointer appearance-none rounded-lg [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full"
+              style={`background: ${sliderBackground}`}
+              onkeydown={preventDefault()}
+            />
+          </div>
+        </div>
         <span class="text-muted-foreground w-16 text-sm">{formatTime(duration)}</span>
       </div>
 
       <!-- Kontrollleiste -->
       <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-4">
           <!-- Play/Pause -->
           <button
             onclick={togglePlay}
@@ -235,7 +296,33 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <button
+            onclick={() =>
+              (appState.uiState.showTimelineMarkers = !appState.uiState.showTimelineMarkers)}
+            class="hover:bg-input rounded p-2 transition-colors"
+            aria-label="presentation"
+            title="Schalte Zeitachsenszenenmarkierungen an/aus"
+          >
+            {#if appState.uiState.showTimelineMarkers}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="size-5"
+              >
+                <path
+                  d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528"
+                />
+              </svg>
+            {:else}
+              <Flag class="size-5" />
+            {/if}
+          </button>
           <button
             onclick={onTogglePresenationMode}
             class="hover:bg-input rounded p-2 transition-colors"
@@ -250,7 +337,11 @@
           </button>
           <!-- Lautstärke -->
           <div class="flex items-center gap-2">
-            <button onclick={toggleMute} class="hover:bg-input rounded p-2 transition-colors">
+            <button
+              onclick={toggleMute}
+              class="hover:bg-input rounded p-2 transition-colors"
+              title="Lautstärke an/aus"
+            >
               {#if isMuted}
                 <VolumeOff class="size-5" />
               {:else if volume === 0}
