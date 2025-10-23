@@ -44,3 +44,8 @@
 ## 0.2.3
 
 - Improve usability when creating new items
+
+## 0.3.0
+
+- Timeline popovers
+- Recent projects
