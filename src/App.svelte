@@ -219,7 +219,7 @@
       scene: {
         id: crypto.randomUUID(),
         title: `Szene ${appState.sceneCount + 1}`,
-        time: appState.currentTime,
+        time: Math.max(0, appState.currentTime - Number(appState.settings.shiftSceneTime)),
       },
       new: true,
     });

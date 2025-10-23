@@ -64,6 +64,7 @@ export interface SettingsState {
   openLastProjectOnStartup: boolean;
   itemPlaceLocation: 'top' | 'bottom';
   skipIntervall: string;
+  shiftSceneTime: string;
 }
 
 export interface ProjectMetadata {

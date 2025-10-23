@@ -32,6 +32,7 @@ class AppState implements LibState {
     openLastProjectOnStartup: false,
     itemPlaceLocation: 'bottom',
     skipIntervall: '5',
+    shiftSceneTime: '0'
   });
 
   constructor() {

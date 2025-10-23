@@ -99,6 +99,19 @@
               ]}
             />
           </SettingsEntry>
+          <SettingsEntry title="Zeit der Szene beim Erstellen verschieben">
+            <Dropdown
+              bind:value={appState.settings.shiftSceneTime}
+              items={[
+                { label: '0 Sekunden', value: '0' },
+                { label: '- 5 Sekunden', value: '5' },
+                { label: '- 10 Sekunden', value: '10' },
+                { label: '- 15 Sekunden', value: '15' },
+                { label: '- 20 Sekunden', value: '20' },
+                { label: '- 30 Sekunden', value: '30' },
+              ]}
+            />
+          </SettingsEntry>
         </SettingsSection>
         <SettingsSection title="Video">
           <SettingsEntry
