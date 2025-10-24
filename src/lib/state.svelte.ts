@@ -12,6 +12,7 @@ class AppState implements LibState {
   isPresentationMode = $state(false);
   playing = $state(false);
   currentTime = $state(0);
+  videoSpeed = $state(1);
   recentProjects = new SvelteMap<string, ProjectMetadata>([]);
   project = $state<Project>({
     version: '',
@@ -32,7 +33,7 @@ class AppState implements LibState {
     openLastProjectOnStartup: false,
     itemPlaceLocation: 'bottom',
     skipIntervall: '5',
-    shiftSceneTime: '0'
+    shiftSceneTime: '0',
   });
 
   constructor() {

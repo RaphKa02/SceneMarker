@@ -1,12 +1,14 @@
 <script lang="ts">
   import TimelineMarker from '$components/TimelineMarker.svelte';
   import { Button } from '$components/ui/button';
+  import * as Select from '$components/ui/select';
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import { appState } from '$lib/state.svelte';
   import type { SceneListItemScene, VideoState } from '$lib/types';
   import { formatTime, preventDefault } from '$utils';
   import Expand from '@lucide/svelte/icons/expand';
   import Flag from '@lucide/svelte/icons/flag';
+  import Gauge from '@lucide/svelte/icons/gauge';
   import Monitor from '@lucide/svelte/icons/monitor';
   import MonitorOff from '@lucide/svelte/icons/monitor-off';
   import Pause from '@lucide/svelte/icons/pause';
@@ -17,7 +19,7 @@
   import VolumeOff from '@lucide/svelte/icons/volume-off';
   import VolumeX from '@lucide/svelte/icons/volume-x';
   import { emitTo } from '@tauri-apps/api/event';
-  import { onMount, tick, untrack } from 'svelte';
+  import { onMount, untrack } from 'svelte';
 
   interface Props {
     videoPath?: string;
@@ -34,6 +36,7 @@
   }: Props = $props();
 
   let videoElement = $state<HTMLVideoElement | null>(null);
+
   let hasVideoError = $state(false);
 
   let duration = $state(0);
@@ -200,11 +203,12 @@
     <video
       bind:this={videoElement}
       bind:currentTime
+      bind:playbackRate={appState.videoSpeed}
       class="h-full w-full bg-black object-contain"
       onloadedmetadata={handleLoadedMetadata}
       onplay={handlePlay}
       onpause={handlePause}
-      onerror={(e) => {
+      onerror={() => {
         hasVideoError = true;
       }}
       src={videoState.videoPath}
@@ -215,7 +219,7 @@
     </video>
     <div
       class={[
-        'bg-background absolute bottom-0 w-full space-y-3 p-4 opacity-0 transition-opacity focus-within:opacity-100 hover:opacity-100',
+        'bg-background absolute bottom-0 w-full space-y-3 p-4 opacity-0 transition-opacity hover:opacity-100',
         showControlls && 'opacity-100',
       ]}
     >
@@ -294,6 +298,26 @@
               </button>
             {/each}
           </div>
+
+          <Select.Root
+            onOpenChange={(open) => {
+              if (open) showControlls = true;
+              else restartControllsInterval();
+            }}
+            type="single"
+            bind:value={() => String(appState.videoSpeed), (v) => (appState.videoSpeed = Number(v))}
+          >
+            <Select.Trigger>
+              <Gauge class="size-5" /> x{appState.videoSpeed}
+            </Select.Trigger>
+            <Select.Content>
+              <Select.Group>
+                {#each [0.25, 0.5, 1, 1.5, 2] as speed}
+                  <Select.Item value={String(speed)}>{speed}</Select.Item>
+                {/each}
+              </Select.Group>
+            </Select.Content>
+          </Select.Root>
         </div>
 
         <div class="flex items-center gap-2">
@@ -323,20 +347,9 @@
               <Flag class="size-5" />
             {/if}
           </button>
-          <button
-            onclick={onTogglePresenationMode}
-            class="hover:bg-input rounded p-2 transition-colors"
-            aria-label="presentation"
-            title="Starte/Stoppe den Präsentationsmodus"
-          >
-            {#if appState.isPresentationMode}
-              <MonitorOff class="size-5" />
-            {:else}
-              <Monitor class="size-5" />
-            {/if}
-          </button>
+
           <!-- Lautstärke -->
-          <div class="flex items-center gap-2">
+          <div class="mr-2 flex items-center gap-2">
             <button
               onclick={toggleMute}
               class="hover:bg-input rounded p-2 transition-colors"
@@ -364,6 +377,19 @@
               class="bg-input [&::-webkit-slider-thumb]:bg-primary h-2 w-20 cursor-pointer appearance-none rounded-lg [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full"
             />
           </div>
+
+          <button
+            onclick={onTogglePresenationMode}
+            class="hover:bg-input rounded p-2 transition-colors"
+            aria-label="presentation"
+            title="Starte/Stoppe den Präsentationsmodus"
+          >
+            {#if appState.isPresentationMode}
+              <MonitorOff class="size-5" />
+            {:else}
+              <Monitor class="size-5" />
+            {/if}
+          </button>
 
           <button
             onclick={toggleFullscreen}

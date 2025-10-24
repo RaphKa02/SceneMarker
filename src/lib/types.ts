@@ -41,6 +41,7 @@ export interface LibState {
   isPresentationMode: boolean;
   currentTime: number;
   playing: boolean;
+  videoSpeed: number;
   project: Project;
 }
 
