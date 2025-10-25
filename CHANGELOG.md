@@ -49,3 +49,9 @@
 
 - Timeline popovers
 - Recent projects
+
+## 0.3.1
+
+- Option to shift scene time backwards at creation
+- Video speed controlls
+- Better video navigation
