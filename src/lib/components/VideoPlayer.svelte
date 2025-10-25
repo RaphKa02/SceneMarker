@@ -1,11 +1,13 @@
 <script lang="ts">
+  import SkipLeftIcon from '$components/SkipLeftIcon.svelte';
+  import SkipRightIcon from '$components/SkipRightIcon.svelte';
   import TimelineMarker from '$components/TimelineMarker.svelte';
   import { Button } from '$components/ui/button';
   import * as Select from '$components/ui/select';
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import { appState } from '$lib/state.svelte';
   import type { SceneListItemScene, VideoState } from '$lib/types';
-  import { formatTime, preventDefault } from '$utils';
+  import { formatTime } from '$utils';
   import Expand from '@lucide/svelte/icons/expand';
   import Flag from '@lucide/svelte/icons/flag';
   import Gauge from '@lucide/svelte/icons/gauge';
@@ -19,7 +21,7 @@
   import VolumeOff from '@lucide/svelte/icons/volume-off';
   import VolumeX from '@lucide/svelte/icons/volume-x';
   import { emitTo } from '@tauri-apps/api/event';
-  import { onMount, untrack } from 'svelte';
+  import { onMount, tick, untrack } from 'svelte';
 
   interface Props {
     videoPath?: string;
@@ -49,6 +51,10 @@
   let showControlls = $state(false);
 
   let lastSeekTime = $state(0);
+
+  let skipRightActive = $state(false);
+  let skipLeftActive = $state(false);
+  let skipAmount = $state(0);
 
   let sliderValue = $state(currentTime);
   const sliderProgress = $derived((sliderValue / duration) * 100);
@@ -137,10 +143,16 @@
     }
   }
 
-  function skip(seconds: number) {
+  async function skip(seconds: number) {
     if (videoElement) {
       videoState.currentTime = Math.max(0, Math.min(duration, currentTime + seconds));
       videoElement.currentTime = videoState.currentTime;
+      skipAmount = seconds;
+      skipRightActive = false;
+      skipLeftActive = false;
+      await tick();
+      if (seconds < 0) skipLeftActive = true;
+      if (seconds > 0) skipRightActive = true;
     }
   }
 
@@ -184,8 +196,10 @@
 
   function addActions() {
     keyHandler.registerAction('play-pause', () => {
-      if (videoElement && !isFullscreen)
+      if (videoElement && !isFullscreen) {
         videoState.playing ? videoElement.pause() : videoElement.play();
+        videoElement.focus();
+      }
     });
     keyHandler.registerAction('skip-back', () => skip(-Number(appState.settings.skipIntervall)));
     keyHandler.registerAction('skip-forward', () => skip(Number(appState.settings.skipIntervall)));
@@ -204,7 +218,7 @@
       bind:this={videoElement}
       bind:currentTime
       bind:playbackRate={appState.videoSpeed}
-      class="h-full w-full bg-black object-contain"
+      class="h-full w-full bg-black object-contain outline-none"
       onloadedmetadata={handleLoadedMetadata}
       onplay={handlePlay}
       onpause={handlePause}
@@ -214,12 +228,23 @@
       src={videoState.videoPath}
       onclick={handleVideoClick}
       onmouseenter={handleMouseEnter}
+      tabindex="0"
     >
       <track kind="captions" />
     </video>
+    {#if skipRightActive}
+      <div class="absolute top-1/2 right-4 -translate-x-1/2">
+        <SkipRightIcon active={skipRightActive} seconds={skipAmount} />
+      </div>
+    {/if}
+    {#if skipLeftActive}
+      <div class="absolute top-1/2 left-4 -translate-x-1/2">
+        <SkipLeftIcon active={skipLeftActive} seconds={skipAmount} />
+      </div>
+    {/if}
     <div
       class={[
-        'bg-background absolute bottom-0 w-full space-y-3 p-4 opacity-0 transition-opacity hover:opacity-100',
+        'bg-background absolute bottom-0 w-full space-y-3 p-4 opacity-0 transition-opacity focus-within:opacity-100 hover:opacity-100',
         showControlls && 'opacity-100',
       ]}
     >
@@ -254,7 +279,6 @@
               oninput={(e) => throttledSeekTo(parseFloat((e.target as HTMLInputElement).value))}
               class="[&::-webkit-slider-thumb]:bg-primary h-full w-full cursor-pointer appearance-none rounded-lg [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full"
               style={`background: ${sliderBackground}`}
-              onkeydown={preventDefault()}
             />
           </div>
         </div>
