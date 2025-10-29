@@ -4,6 +4,7 @@
   import * as Popover from '$components/ui/popover';
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import { appState } from '$lib/state.svelte';
+  import { tutorialElement } from '$lib/tutorial.svelte';
   import { stopPropagation } from '$utils';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import FolderOpen from '@lucide/svelte/icons/folder-open';
@@ -44,7 +45,7 @@
   class="border-border bg-background flex h-14 items-center gap-2 border-b px-4"
   data-tauri-drag-region
 >
-  <div class="mr-4 flex items-center gap-2">
+  <div class="mr-4 flex items-center gap-2" use:tutorialElement={{ id: 'main' }}>
     <div
       class="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded font-bold"
     >
@@ -56,7 +57,7 @@
   <DropdownMenu.Root>
     <DropdownMenu.Trigger>
       {#snippet child({ props })}
-        <Button {...props} variant="outline">
+        <Button {...props} variant="outline" use={[[tutorialElement, { id: 'last-projects-btn' }]]}>
           Letzte Projekte <ChevronDown />
         </Button>
       {/snippet}
@@ -110,6 +111,7 @@
     onclick={onLoadProject}
     variant="outline"
     title={keyHandler.getKeyCombo('load-project', true)}
+    use={[[tutorialElement, { id: 'load-project-btn' }]]}
   >
     <FolderOpen class="size-4" />
     Projekt laden
@@ -119,6 +121,7 @@
     onclick={onOpenVideo}
     variant="outline"
     title={keyHandler.getKeyCombo('open-video-dialog', true)}
+    use={[[tutorialElement, { id: 'create-project-btn' }]]}
   >
     <Video class="size-4" />
     Video öffnen
@@ -128,6 +131,7 @@
     onclick={onSaveProjectAt}
     variant="outline"
     title={keyHandler.getKeyCombo('save-project-at', true)}
+    use={[[tutorialElement, { id: 'save-project-as-btn' }]]}
   >
     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path
@@ -144,6 +148,7 @@
     disabled={!appState.projectModified}
     variant={appState.projectModified ? 'default' : 'outline'}
     title={keyHandler.getKeyCombo('save-project', true)}
+    use={[[tutorialElement, { id: 'save-project-btn' }]]}
   >
     <Save />
   </Button>

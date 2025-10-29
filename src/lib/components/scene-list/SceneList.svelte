@@ -3,13 +3,16 @@
   import { Button } from '$components/ui/button';
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import { appState } from '$lib/state.svelte';
+  import { startTutorial, tutorialElement } from '$lib/tutorial.svelte';
   import type { SceneListItem } from '$lib/types';
-  import CircleArrowDown from '@lucide/svelte/icons/circle-arrow-down';
+  import Download from '@lucide/svelte/icons/download';
   import EyeOff from '@lucide/svelte/icons/eye-off';
   import FolderPlus from '@lucide/svelte/icons/folder-plus';
   import Lock from '@lucide/svelte/icons/lock';
   import LockOpen from '@lucide/svelte/icons/lock-open';
   import Plus from '@lucide/svelte/icons/plus';
+  import Rocket from '@lucide/svelte/icons/rocket';
+  import Search from '@lucide/svelte/icons/search';
   import Settings from '@lucide/svelte/icons/settings';
   import X from '@lucide/svelte/icons/x';
   import { onMount } from 'svelte';
@@ -63,6 +66,7 @@
         size="icon"
         onclick={onAddScene}
         title={`Fügt eine neue Szene hinzu (${keyHandler.getKeyCombo('add-scene', true)})`}
+        use={[[tutorialElement, { id: 'add-scene-btn' }]]}
       >
         <Plus />
       </Button>
@@ -71,6 +75,7 @@
         size="icon"
         onclick={onAddGroup}
         title={`Erstellt einen neuen Ordner (${keyHandler.getKeyCombo('add-group', true)})`}
+        use={[[tutorialElement, { id: 'add-group-btn' }]]}
       >
         <FolderPlus />
       </Button>
@@ -81,6 +86,7 @@
         size="icon"
         onclick={() => (appState.uiState.lockSidebar = !appState.uiState.lockSidebar)}
         title={`Schaltet drag and drop an/aus (${keyHandler.getKeyCombo('toggle-locked', true)})`}
+        use={[[tutorialElement, { id: 'lock-sidebar-btn' }]]}
       >
         {#if appState.uiState.lockSidebar}
           <Lock />
@@ -93,34 +99,24 @@
         size="icon"
         onclick={() => (visible = !visible)}
         title="Schaltet die Sidebar aus (Strg+E)"
+        use={[[tutorialElement, { id: 'hide-sidebar-btn' }]]}
       >
         <EyeOff />
       </Button>
     </div>
   </div>
   <div class="border-border border-b px-4 py-2">
-    <h2 class="mb-3 text-lg font-semibold">Szenen ({appState.sceneCount})</h2>
+    <h3 class="mb-3 text-lg font-semibold">Szenen ({appState.sceneCount})</h3>
 
-    <div class="relative">
+    <div class="relative" use:tutorialElement={{ id: 'filter-input' }}>
       <input
         type="text"
+        name="search"
         bind:value={searchQuery}
-        placeholder="Szenen durchsuchen..."
+        placeholder="Einträge durchsuchen..."
         class="bg-input w-full rounded border px-9 py-2 text-sm"
       />
-      <svg
-        class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-        />
-      </svg>
+      <Search class="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
       <Button
         variant="ghost"
         size="sm"
@@ -132,7 +128,7 @@
     </div>
   </div>
 
-  <div class="flex-1 overflow-y-auto p-2">
+  <div class="bg-background flex-1 overflow-y-auto p-2" use:tutorialElement={{ id: 'items-area' }}>
     <DnDZone
       bind:items={listItems}
       locked={appState.uiState.lockSidebar}
@@ -141,19 +137,30 @@
     />
   </div>
 
-  <div class="border-border flex h-12 items-center justify-end gap-1 border-t px-4">
-    {#if appState.updateAvailable}
+  <div class="border-border flex h-12 items-center justify-between gap-1 border-t px-4">
+    <Button
+      variant="ghost"
+      size="icon"
+      onclick={startTutorial}
+      use={[[tutorialElement, { id: 'tour-btn' }]]}
+    >
+      <Rocket class="size-5" />
+    </Button>
+    <div>
+      {#if appState.updateAvailable}
+        <Button variant="ghost" size="icon" onclick={() => (appState.showUpdatePopup = true)}>
+          <Download class="size-5" />
+        </Button>
+      {/if}
       <Button
         variant="ghost"
         size="icon"
-        tabindex={-1}
-        onclick={() => (appState.showUpdatePopup = true)}
+        class="relative"
+        onclick={onShowSettings}
+        use={[[tutorialElement, { id: 'settings-btn' }]]}
       >
-        <CircleArrowDown class="size-6" />
+        <Settings class="size-5" />
       </Button>
-    {/if}
-    <Button variant="ghost" size="icon" onclick={onShowSettings}>
-      <Settings class="size-5" />
-    </Button>
+    </div>
   </div>
 </div>

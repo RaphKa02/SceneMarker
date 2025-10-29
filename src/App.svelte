@@ -2,6 +2,7 @@
   import SceneList from '$components/scene-list/SceneList.svelte';
   import Settings from '$components/Settings.svelte';
   import TopBar from '$components/TopBar.svelte';
+  import Tutorial from '$components/Tutorial.svelte';
   import { Button } from '$components/ui/button';
   import UpdateAlert from '$components/UpdateAlert.svelte';
   import VideoPlayer from '$components/VideoPlayer.svelte';
@@ -340,6 +341,8 @@
 {#if appState.updateAvailable}
   <UpdateAlert />
 {/if}
+
+<Tutorial />
 
 <WindowControlls />
 

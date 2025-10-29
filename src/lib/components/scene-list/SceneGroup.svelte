@@ -54,7 +54,7 @@
   async function startEdit() {
     newCreated = false;
     editingId = group.id;
-    editGroupName = group.name ?? '';
+    editGroupName = group.name;
     await tick();
     inputRef?.select();
     inputRef?.scrollIntoView({ behavior: 'smooth' });
@@ -83,10 +83,10 @@
 
 <div
   bind:this={dialogAnchor}
-  class="group/sg border-border hover:shadow-primary/10 rounded-xl border p-2 shadow-lg shadow-black/20 transition-all"
+  class="group/sg border-border hover:shadow-primary/10 space-y-3 rounded-xl border px-3 py-2 shadow-lg shadow-black/20 transition-all"
 >
   {#if isEditGroup}
-    <div class="space-y-2 p-2">
+    <div class="space-y-2">
       <input
         type="text"
         bind:this={inputRef}
@@ -105,29 +105,34 @@
       </div>
     </div>
   {:else}
-    <div class="flex w-full items-center justify-between pb-2 pl-2 text-left">
-      <h1 ondblclick={startEdit} class="text-foreground font-semibold">{group.name}</h1>
-      <div class="flex items-center">
-        <Button
-          variant="ghost"
-          size="sm"
-          class="text-foreground opacity-0 transition-transform group-hover/sg:opacity-100"
-          aria-label="Open dropdown"
-          onclick={stopPropagation(() => (dropdownOpen = true))}
-          bind:ref={dropdownAnchor}
-        >
-          <EllipsisVertical class="size-4 text-sm" />
-        </Button>
-        <Button variant="ghost" size="icon" onclick={() => (extended = !extended)}>
-          <ChevronDown
-            class={[
-              'text-muted-foreground h-5 w-5 transform transition-transform',
-              extended && 'rotate-180',
-            ]}
-          />
-        </Button>
+    <h1
+      class="font-medium text-wrap transition-colors"
+      ondblclick={() => !dragDisabled && startEdit()}
+    >
+      <div class="float-right pl-2 text-sm font-normal">
+        <div class="flex -mt-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            class="text-foreground opacity-0 transition-transform group-hover/sg:opacity-100"
+            aria-label="Open dropdown"
+            onclick={stopPropagation(() => (dropdownOpen = true))}
+            bind:ref={dropdownAnchor}
+          >
+            <EllipsisVertical class="size-4 text-sm" />
+          </Button>
+          <Button variant="ghost" size="sm" onclick={() => (extended = !extended)} class="ring-0">
+            <ChevronDown
+              class={[
+                'text-muted-foreground h-5 w-5 transform transition-transform',
+                extended && 'rotate-180',
+              ]}
+            />
+          </Button>
+        </div>
       </div>
-    </div>
+      {group.name}
+    </h1>
   {/if}
   {#if extended}
     <div

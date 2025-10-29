@@ -6,7 +6,7 @@ export interface Scene {
 
 export interface Group {
   id: string;
-  name: string | undefined;
+  name: string;
 }
 
 export interface SceneListItemScene {
@@ -58,6 +58,7 @@ export interface UiState {
   showSettings: boolean;
   settingsTab: string;
   showTimelineMarkers: boolean;
+  tutorialShown: boolean;
 }
 
 export interface SettingsState {

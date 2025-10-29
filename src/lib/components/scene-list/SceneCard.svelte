@@ -53,8 +53,8 @@
   function saveEdit() {
     if (editing && editTitle.trim()) {
       scene.title = editTitle.trim();
-      editingId = null;
     }
+    editingId = null;
   }
 
   function cancelEdit() {
@@ -70,7 +70,7 @@
 <div
   bind:this={dialogAnchor}
   class={[
-    'group/sc bg-card text-card-foreground w-full rounded-lg border px-3 py-2 text-left shadow-sm transition-colors',
+    'group/sc bg-card text-card-foreground w-full rounded-xl border px-3 py-2 text-left shadow-sm transition-colors',
     !editing && 'hover:bg-input',
   ]}
   onclick={(e) => {

@@ -30,7 +30,11 @@
           const filteredScenes = item.items.filter((sceneItem) =>
             sceneItem.scene.title.toLowerCase().includes(transformedQuery)
           );
-          return filteredScenes.length > 0 ? { ...item, items: filteredScenes } : null;
+          return filteredScenes.length > 0
+            ? { ...item, items: filteredScenes }
+            : item.group.name.toLowerCase().includes(transformedQuery)
+              ? item
+              : null;
         }
         return null;
       })

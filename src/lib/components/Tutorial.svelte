@@ -1,0 +1,59 @@
+<script lang="ts">
+  import { Button } from '$components/ui/button';
+  import * as Popover from '$components/ui/popover';
+  import { appState } from '$lib/state.svelte';
+  import {
+    nextStage,
+    previousStage,
+    startTutorial,
+    stopTutorial,
+    tutorialState,
+  } from '$lib/tutorial.svelte';
+  import X from '@lucide/svelte/icons/x';
+  import { onMount, tick } from 'svelte';
+
+  let nextBtn = $state<HTMLButtonElement | null>(null);
+
+  onMount(() => {
+    const wait = async () => {
+      await tick();
+      if (!appState.uiState.tutorialShown) startTutorial();
+    };
+    wait();
+  });
+</script>
+
+{#if tutorialState.active}
+  <div class="fixed z-[999] h-screen w-screen bg-black/60"></div>
+
+  <Popover.Root open>
+    <Popover.Content
+      customAnchor={tutorialState.element}
+      interactOutsideBehavior="ignore"
+      escapeKeydownBehavior="ignore"
+      align="start"
+      class="z-[1000] grid w-fit max-w-md gap-4"
+    >
+      {tutorialState.stage?.text}
+
+      <div class="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4">
+        <Button
+          variant="ghost"
+          class="text-muted-foreground flex w-fit items-center gap-2 text-xs"
+          onclick={stopTutorial}
+        >
+          Tour beenden <X class="size-4" />
+        </Button>
+        <span class="text-muted-foreground text-sm">
+          {tutorialState.stageNumber + 1}/{tutorialState.stageCount}
+        </span>
+        <Button variant="outline" onclick={previousStage} disabled={tutorialState.firstStage}>
+          Zurück
+        </Button>
+        <Button onclick={nextStage} bind:ref={nextBtn} tabindex={1}>
+          {tutorialState.lastStage ? 'Ende' : 'Weiter'}
+        </Button>
+      </div>
+    </Popover.Content>
+  </Popover.Root>
+{/if}
