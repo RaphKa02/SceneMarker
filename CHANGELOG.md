@@ -55,3 +55,8 @@
 - Option to shift scene time backwards at creation
 - Video speed controlls
 - Better video navigation
+
+## 1.0.0
+
+- Tutorial tour on first startup
+- Analytics

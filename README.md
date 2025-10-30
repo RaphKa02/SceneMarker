@@ -1,6 +1,6 @@
 # 🎬 SceneMarker
 
-![Version](https://img.shields.io/badge/version-0.3.1-blue)
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![License](https://img.shields.io/badge/license-GPL_3.0-green)
 ![Platform](https://img.shields.io/badge/platform-Windows-blue)
 
@@ -121,7 +121,7 @@ pnpm run tauri build
 
 ## 📝 Lizenz
 
-Dieses Projekt ist unter der MIT Lizenz lizenziert.
+Dieses Projekt ist unter der GLP 3.0 Lizenz lizenziert.
 
 ---
 
