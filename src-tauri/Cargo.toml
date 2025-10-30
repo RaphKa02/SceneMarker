@@ -1,6 +1,6 @@
 [package]
 name = "scene-marker"
-version = "1.0.1"
+version = "1.0.2"
 description = "Simple cross-platform Video Scene Marker App für den Desktop."
 authors = ["Raphael Karl"]
 edition = "2024"

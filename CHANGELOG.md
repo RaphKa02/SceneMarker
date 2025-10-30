@@ -65,3 +65,7 @@
 
 - Fix migration
 - Fix window close
+
+## 1.0.2
+
+- Fix programm freeze
