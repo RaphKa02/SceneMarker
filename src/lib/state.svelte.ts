@@ -90,8 +90,8 @@ class AppState implements LibState {
     const settingsState = await store.get<SettingsState>('settingsState');
     const recentProjects = (await store.get<ProjectMetadata[]>('recentProjects')) ?? [];
 
-    if (uiState) this.uiState = uiState;
-    if (settingsState) this.settings = settingsState;
+    if (uiState) this.uiState = { ...this.uiState, ...uiState };
+    if (settingsState) this.settings = { ...this.settings, ...settingsState };
     this.recentProjects = new SvelteMap(recentProjects.map((p) => [p.path, p]));
 
     this.#store = store;

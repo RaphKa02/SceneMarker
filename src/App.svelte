@@ -40,7 +40,7 @@
 
     const unlisten = getCurrentWindow().onCloseRequested(async (event) => {
       if (dev) return;
-      if (await isProjectModifiedCancel()) return;
+      if (!(await isProjectModifiedCancel())) return;
 
       event.preventDefault();
     });
