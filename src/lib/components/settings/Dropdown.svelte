@@ -14,7 +14,7 @@
 
 <Select.Root type="single" bind:value {onValueChange}>
   <Select.Trigger class="min-w-2xs">{triggerContent}</Select.Trigger>
-  <Select.Content>
+  <Select.Content preventScroll>
     <Select.Group>
       {#each items as item (item.value)}
         <Select.Item value={item.value} label={item.label} disabled={item.disabled}>

@@ -4,7 +4,7 @@ const migrations: Record<string, (p: ProjectAny) => ProjectAny> = {
   '0.0': convertStartTo0_2,
   '0.1': (p) => ({ ...p, version: '0.2.0' }),
   '0.2': convert0_2To0_3,
-  '0.3': (p) => p,
+  '0.3': (p) => ({ ...p, version: '1.0.0' }),
 };
 
 export function convertProject(
