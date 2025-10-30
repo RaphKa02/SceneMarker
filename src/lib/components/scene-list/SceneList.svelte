@@ -1,6 +1,7 @@
 <script lang="ts">
   import DnDZone from '$components/scene-list/DnDZone.svelte';
   import { Button } from '$components/ui/button';
+  import { trackEvent } from '$lib/analytics';
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import { appState } from '$lib/state.svelte';
   import { startTutorial, tutorialElement } from '$lib/tutorial.svelte';
@@ -18,7 +19,6 @@
   import { onMount } from 'svelte';
 
   interface Props {
-    visible: boolean;
     listItems: SceneListItem[];
     onJumpToScene: (time: number) => void;
     onAddScene: () => void;
@@ -27,7 +27,6 @@
   }
 
   let {
-    visible = $bindable(true),
     listItems = $bindable(),
     onJumpToScene,
     onAddScene,
@@ -45,16 +44,23 @@
   function setActions() {
     keyHandler.registerAction('add-scene', onAddScene);
     keyHandler.registerAction('add-group', onAddGroup);
-    keyHandler.registerAction(
-      'toggle-locked',
-      () => (appState.uiState.lockSidebar = !appState.uiState.lockSidebar)
-    );
+    keyHandler.registerAction('toggle-locked', toggleLockSidebar);
   }
 
   function removeActions() {
     keyHandler.removeAction('add-scene');
     keyHandler.removeAction('add-group');
     keyHandler.removeAction('toggle-locked');
+  }
+
+  function toggleLockSidebar() {
+    appState.uiState.lockSidebar = !appState.uiState.lockSidebar;
+    trackEvent('sidebar_locked', { value: String(appState.uiState.lockSidebar) });
+  }
+  
+  function toggleShowSidebar() {
+    appState.uiState.showSidebar = !appState.uiState.showSidebar;
+    trackEvent('sidebar_visible', { value: String(appState.uiState.showSidebar) });
   }
 </script>
 
@@ -84,7 +90,7 @@
       <Button
         variant="outline"
         size="icon"
-        onclick={() => (appState.uiState.lockSidebar = !appState.uiState.lockSidebar)}
+        onclick={toggleLockSidebar}
         title={`Schaltet drag and drop an/aus (${keyHandler.getKeyCombo('toggle-locked', true)})`}
         use={[[tutorialElement, { id: 'lock-sidebar-btn' }]]}
       >
@@ -97,7 +103,7 @@
       <Button
         variant="outline"
         size="icon"
-        onclick={() => (visible = !visible)}
+        onclick={toggleShowSidebar}
         title="Schaltet die Sidebar aus (Strg+E)"
         use={[[tutorialElement, { id: 'hide-sidebar-btn' }]]}
       >

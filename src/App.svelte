@@ -28,6 +28,7 @@
   import { onMount, tick } from 'svelte';
   import { toast } from 'svelte-sonner';
   import { dev, number, version } from '../build.json';
+  import { trackEvent } from '$lib/analytics';
 
   let isResizing = $state(false);
 
@@ -38,15 +39,10 @@
     setActions();
 
     const unlisten = getCurrentWindow().onCloseRequested(async (event) => {
-      if (!appState.projectModified || dev) return;
+      if (dev) return;
+      if (await isProjectModifiedCancel()) return;
 
-      const confirmed = await ask(
-        'Das Projekt wurde bearbeitet und es liegen nicht gespeicherte Änderungen vor. Trotzdem schließen?',
-        { title: 'SceneMarker', kind: 'warning', cancelLabel: 'Nein', okLabel: 'Ja' }
-      );
-      if (!confirmed) {
-        event.preventDefault();
-      }
+      event.preventDefault();
     });
 
     return async () => {
@@ -69,6 +65,7 @@
 
     if (args[1]) {
       loadProjectFromPath(args[1]);
+      trackEvent('project_loaded', { action: 'file' });
     }
   }
 
@@ -77,10 +74,10 @@
     keyHandler.registerAction('save-project-at', saveProjectAt);
     keyHandler.registerAction('load-project', loadProject);
     keyHandler.registerAction('open-video-dialog', openVideoDialog);
-    keyHandler.registerAction(
-      'toggle-sidebar',
-      () => (appState.uiState.showSidebar = !appState.uiState.showSidebar)
-    );
+    keyHandler.registerAction('toggle-sidebar', () => {
+      appState.uiState.showSidebar = !appState.uiState.showSidebar;
+      trackEvent('sidebar_toggled', { value: String(appState.uiState.showSidebar) });
+    });
   }
 
   function removeActions() {
@@ -92,6 +89,7 @@
   }
 
   async function openVideoDialog(reset = true) {
+    if (reset && (await isProjectModifiedCancel())) return;
     try {
       const selected = await open({
         multiple: false,
@@ -185,13 +183,8 @@
 
   async function loadProjectFromPath(filePath: string) {
     try {
-      if (appState.projectModified) {
-        const confirmed = await ask(
-          'Das Projekt wurde bearbeitet und es liegen nicht gespeicherte Änderungen vor. Trotzdem laden?',
-          { title: 'SceneMarker', kind: 'warning', cancelLabel: 'Nein', okLabel: 'Ja' }
-        );
-        if (!confirmed) return;
-      }
+      if (await isProjectModifiedCancel()) return;
+
       const content = await readTextFile(filePath);
       const { project, migrated } = convertProject(JSON.parse(content), version);
       appState.project = project;
@@ -224,6 +217,7 @@
       },
       new: true,
     });
+    trackEvent('scene_created');
   }
 
   function jumpToScene(time: number) {
@@ -234,6 +228,8 @@
       currentTime: time,
       playing: appState.playing,
     });
+
+    trackEvent('scene_navigated_to', { type: 'card' });
   }
 
   function addGroup() {
@@ -247,6 +243,8 @@
       items: [],
       new: true,
     });
+
+    trackEvent('group_created');
   }
 
   function addSceneListItem(item: SceneListItem) {
@@ -255,12 +253,20 @@
     else appState.project.sceneListItems.push(item);
   }
 
+  function deleteProjectMetadata(path: string) {
+    appState.recentProjects.delete(path);
+
+    trackEvent('recent-project_deleted');
+  }
+
   function startResizing(e: Event) {
     e.preventDefault();
     e.stopPropagation();
     isResizing = true;
     document.addEventListener('mousemove', resize);
     document.addEventListener('mouseup', stopResizing);
+
+    trackEvent('resize_started');
   }
 
   function resize(e: MouseEvent) {
@@ -330,6 +336,24 @@
         playing: appState.playing,
       });
     });
+
+    trackEvent('presentation-mode_started');
+  }
+
+  function showSettings() {
+    trackEvent('settings_open');
+    appState.uiState.showSettings = true;
+  }
+
+  async function isProjectModifiedCancel() {
+    if (appState.projectModified) {
+      const confirmed = await ask(
+        'Das Projekt wurde bearbeitet und es liegen nicht gespeicherte Änderungen vor. Trotzdem fortfahren?',
+        { title: 'SceneMarker', kind: 'warning', cancelLabel: 'Nein', okLabel: 'Ja' }
+      );
+      if (!confirmed) return true;
+    }
+    return false;
   }
 </script>
 
@@ -354,6 +378,7 @@
     onSaveProjectAt={saveProjectAt}
     onLoadProject={loadProject}
     onLoadProjectFromPath={loadProjectFromPath}
+    onDeleteProjectMetadata={deleteProjectMetadata}
   />
 
   <div class="flex flex-1 overflow-hidden">
@@ -378,12 +403,11 @@
           role="separator"
         ></div>
         <SceneList
-          bind:visible={appState.uiState.showSidebar}
           bind:listItems={appState.project.sceneListItems}
           onJumpToScene={jumpToScene}
           onAddScene={addScene}
           onAddGroup={addGroup}
-          onShowSettings={() => (appState.uiState.showSettings = true)}
+          onShowSettings={showSettings}
         />
       </aside>
     {:else}

@@ -2,6 +2,7 @@
   import { Button } from '$components/ui/button';
   import * as DropdownMenu from '$components/ui/dropdown-menu';
   import * as Popover from '$components/ui/popover';
+  import { trackEvent } from '$lib/analytics';
   import { appState } from '$lib/state.svelte';
   import type { Scene } from '$lib/types';
   import { formatTime, stopPropagation } from '$utils';
@@ -109,7 +110,11 @@
   {:else}
     <h1
       class="text-start font-medium text-wrap transition-colors"
-      ondblclick={() => !locked && startEdit()}
+      ondblclick={() => {
+        if (locked) return;
+        startEdit();
+        trackEvent('scene-card_edit-start', { source: 'dblClick' });
+      }}
     >
       <div class="float-right pl-2 text-sm font-normal">
         <Button
@@ -134,11 +139,21 @@
 <DropdownMenu.Root bind:open={dropdownOpen}>
   <DropdownMenu.Content customAnchor={dropdownAnchor} align="end">
     <DropdownMenu.Group>
-      <DropdownMenu.Item onclick={startEdit}>
+      <DropdownMenu.Item
+        onclick={() => {
+          startEdit;
+          trackEvent('scene-card_edit-start', { source: 'menu' });
+        }}
+      >
         <Pencil class="mr-2 size-4" />
         Titel Bearbeiten
       </DropdownMenu.Item>
-      <DropdownMenu.Item onclick={updateSceneTime}>
+      <DropdownMenu.Item
+        onclick={() => {
+          updateSceneTime();
+          trackEvent('scene-card_update-time');
+        }}
+      >
         <svg class="mr-2 size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             stroke-linecap="round"

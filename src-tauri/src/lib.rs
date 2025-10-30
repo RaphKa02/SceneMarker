@@ -1,12 +1,21 @@
 use std::env;
 
 use tauri::Manager;
+use tauri_plugin_aptabase::{EventTracker, InitOptions};
 
 mod utils;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(
+            tauri_plugin_aptabase::Builder::new("A-SH-5081630028")
+                .with_options(InitOptions {
+                    host: Some("https://analytics.karl-raphael.de".to_string()),
+                    flush_interval: None,
+                })
+                .build(),
+        )
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_os::init())
@@ -32,6 +41,16 @@ pub fn run() {
             }
             _ => {}
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while running tauri application")
+        .run(|handler, event| match event {
+            tauri::RunEvent::Exit { .. } => {
+                let _ = handler.track_event("app_exited", None);
+                handler.flush_events_blocking();
+            }
+            tauri::RunEvent::Ready { .. } => {
+                let _ = handler.track_event("app_started", None);
+            }
+            _ => {}
+        });
 }

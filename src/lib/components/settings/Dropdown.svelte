@@ -4,14 +4,15 @@
   interface Props {
     items: { value: string; label: string; disabled?: boolean }[];
     value?: string;
+    onValueChange?: (value: string) => void;
   }
 
-  let { items, value = $bindable() }: Props = $props();
+  let { items, value = $bindable(), onValueChange }: Props = $props();
 
   const triggerContent = $derived(items.find((item) => item.value === value)?.label);
 </script>
 
-<Select.Root type="single" bind:value>
+<Select.Root type="single" bind:value {onValueChange}>
   <Select.Trigger class="min-w-2xs">{triggerContent}</Select.Trigger>
   <Select.Content>
     <Select.Group>

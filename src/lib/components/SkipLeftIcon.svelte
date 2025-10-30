@@ -128,5 +128,7 @@
       <path d="M 0 -10 L -10 0 L 0 10" />
     </g>
   </g>
-  <text class="badge-text" y="50%" transform="translate(60,0)">{seconds}s</text>
+  <text class="badge-text" y="50%" transform="translate(60,0)">
+    {Math.abs(seconds) > 1 ? `${seconds}s` : '-1FR'}</text
+  >
 </svg>

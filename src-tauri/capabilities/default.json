@@ -47,6 +47,7 @@
     "core:event:allow-emit-to",
     "core:window:allow-current-monitor",
     "core:window:allow-available-monitors",
-    "core:window:allow-get-all-windows"
+    "core:window:allow-get-all-windows",
+    "aptabase:allow-track-event"
   ]
 }

@@ -7,6 +7,7 @@
   import * as Dialog from '$components/ui/dialog';
   import Separator from '$components/ui/separator/separator.svelte';
   import * as Tabs from '$components/ui/tabs';
+  import { trackEvent } from '$lib/analytics';
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import { appState } from '$lib/state.svelte';
 
@@ -60,6 +61,7 @@
           <SettingsEntry title="Design">
             <Dropdown
               bind:value={appState.settings.theme}
+              onValueChange={(value) => trackEvent('theme_changed', { theme: value })}
               items={[
                 {
                   label: 'System',
@@ -76,23 +78,13 @@
               ]}
             />
           </SettingsEntry>
-          <!-- <SettingsEntry title="Bei Programmstart letztes Projekt öffnen">
-            <Dropdown
-              bind:value={
-                () => (appState.settings.openLastProjectOnStartup ? 'on' : 'off'),
-                (v) => (appState.settings.openLastProjectOnStartup = v === 'on')
-              }
-              items={[
-                { label: 'An', value: 'on' },
-                { label: 'Aus', value: 'off' },
-              ]}
-            />
-          </SettingsEntry> -->
         </SettingsSection>
         <SettingsSection title="Szenen">
           <SettingsEntry title="Neue Szene/Gruppe platzieren">
             <Dropdown
               bind:value={appState.settings.itemPlaceLocation}
+              onValueChange={(value) =>
+                trackEvent('item-place-location_changed', { location: value })}
               items={[
                 { label: 'Oben', value: 'top' },
                 { label: 'Unten', value: 'bottom' },
@@ -102,6 +94,7 @@
           <SettingsEntry title="Zeit der Szene beim Erstellen verschieben">
             <Dropdown
               bind:value={appState.settings.shiftSceneTime}
+              onValueChange={(value) => trackEvent('time-shift_changed', { time: value })}
               items={[
                 { label: '0 Sekunden', value: '0' },
                 { label: '- 5 Sekunden', value: '5' },
@@ -119,6 +112,7 @@
           >
             <Dropdown
               bind:value={appState.settings.skipIntervall}
+              onValueChange={(value) => trackEvent('skip-interval_changed', { time: value })}
               items={[
                 { label: '1 Sekunde', value: '1' },
                 { label: '5 Sekunden', value: '5' },

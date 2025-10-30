@@ -19,6 +19,7 @@
     onSaveProjectAt: () => void;
     onLoadProject: () => void;
     onLoadProjectFromPath: (path: string) => void;
+    onDeleteProjectMetadata: (path: string) => void;
   }
 
   let {
@@ -28,17 +29,12 @@
     onSaveProjectAt,
     onLoadProject,
     onLoadProjectFromPath,
+    onDeleteProjectMetadata,
   }: Props = $props();
 
   let deleteDialogOpen = $state(false);
   let projectToDelete = $state<string>();
   let dialogAnchor = $state<HTMLElement | null>(null);
-
-  function onDeleteProjectMetadata() {
-    appState.recentProjects.delete(projectToDelete!);
-    deleteDialogOpen = false;
-    projectToDelete = undefined;
-  }
 </script>
 
 <div
@@ -124,7 +120,7 @@
     use={[[tutorialElement, { id: 'create-project-btn' }]]}
   >
     <Video class="size-4" />
-    Video öffnen
+    Neues Projekt
   </Button>
 
   <Button
@@ -169,7 +165,17 @@
       <p class="text-muted-foreground text-sm">Möchtest du diesen Eintrag wirklich löschen?</p>
     </div>
     <div class="flex gap-4">
-      <Button class="flex-1" variant="destructive" onclick={onDeleteProjectMetadata}>Ja</Button>
+      <Button
+        class="flex-1"
+        variant="destructive"
+        onclick={() => {
+          onDeleteProjectMetadata(projectToDelete!);
+          deleteDialogOpen = false;
+          projectToDelete = undefined;
+        }}
+      >
+        Ja
+      </Button>
       <Button class="flex-1" variant="outline" onclick={() => (deleteDialogOpen = false)}>
         Nein
       </Button>

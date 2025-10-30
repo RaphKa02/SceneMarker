@@ -5,6 +5,7 @@ import { check, type Update } from '@tauri-apps/plugin-updater';
 import { toast } from 'svelte-sonner';
 import { dev } from '../../build.json';
 import logger from './logger';
+import { trackEvent } from '$lib/analytics';
 
 let updateObj: Update; // TODO: should be an easier way
 
@@ -44,12 +45,14 @@ export const installUpdate = async () => {
 
     try {
       await updateObj.downloadAndInstall();
+      trackEvent('update_started');
       await relaunch();
     } catch (error) {
       toast.error('Update fehlgeschlagen', {
         description: 'Es trat ein Fehler bei dem Update auf. Versuche es später erneut.',
       });
       logger.error(`Update fehlgeschlagen: ${error}`);
+      trackEvent('update_failed');
     }
   }
 };

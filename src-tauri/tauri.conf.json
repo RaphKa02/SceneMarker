@@ -16,6 +16,7 @@
     },
     "windows": [
       {
+        "label": "main",
         "title": "SceneMarker",
         "x": 0,
         "y": 0,

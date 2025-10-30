@@ -4,6 +4,7 @@
   import TimelineMarker from '$components/TimelineMarker.svelte';
   import { Button } from '$components/ui/button';
   import * as Select from '$components/ui/select';
+  import { trackEvent } from '$lib/analytics';
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import { appState } from '$lib/state.svelte';
   import type { SceneListItemScene, VideoState } from '$lib/types';
@@ -262,7 +263,10 @@
                     scenes={sceneItems}
                     {duration}
                     hidden={false}
-                    onclick={() => seekTo(sceneItems[0].scene.time)}
+                    onclick={() => {
+                      seekTo(sceneItems[0].scene.time);
+                      trackEvent('scene_navigated_to', { type: 'marker' });
+                    }}
                   />
                 {/each}
               </div>

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Button } from '$components/ui/button';
+  import { trackEvent } from '$lib/analytics';
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import Undo from '@lucide/svelte/icons/undo';
 
@@ -27,6 +28,8 @@
       edit = false;
       keyHandler.unbindKey(keyHandler.getKeyCombo(actionId));
       keyHandler.bindKey(lastKeyCombo, actionId);
+
+      trackEvent(`key-combo_${actionId}_changed`, { keyCombo: lastKeyCombo });
       return;
     }
 

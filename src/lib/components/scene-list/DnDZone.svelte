@@ -1,6 +1,7 @@
 <script lang="ts">
   import SceneCard from '$components/scene-list/SceneCard.svelte';
   import SceneGroup from '$components/scene-list/SceneGroup.svelte';
+  import { trackEvent } from '$lib/analytics';
   import type { SceneListItem } from '$lib/types';
   import { dndzone, TRIGGERS, type DndEvent } from 'svelte-dnd-action';
   import { flip } from 'svelte/animate';
@@ -85,10 +86,15 @@
           dragDisabled={locked || searchQuery.trim() !== ''}
           dropFromOthersDisabled={isDraggingGroup}
           bind:editingId
-          onDeleteScene={(id) =>
-            (item.items = item.items.filter((sceneItem) => sceneItem.id !== id))}
+          onDeleteScene={(id) => {
+            item.items = item.items.filter((sceneItem) => sceneItem.id !== id);
+            trackEvent('scene-card_deleted');
+          }}
           {onJumpToScene}
-          onDeleteGroup={() => deleteItem(item.id)}
+          onDeleteGroup={() => {
+            deleteItem(item.id);
+            trackEvent('scene-group_deleted');
+          }}
         />
       {:else}
         <SceneCard
@@ -97,7 +103,10 @@
           bind:newCreated={item.new}
           {locked}
           {onJumpToScene}
-          onDeleteScene={() => deleteItem(item.id)}
+          onDeleteScene={() => {
+            deleteItem(item.id);
+            trackEvent('scene-card_deleted');
+          }}
         />
       {/if}
     </div>

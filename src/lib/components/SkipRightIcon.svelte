@@ -118,7 +118,7 @@
     }
   </style>
 
-  <text class="badge-text" y="50%">{seconds}s</text>
+  <text class="badge-text" y="50%">{Math.abs(seconds) > 1 ? `${seconds}s` : '1FR'}</text>
 
   <g transform="translate(70,25)">
     <g class="chev rear" transform="translate(-22,0)">

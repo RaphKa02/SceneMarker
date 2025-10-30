@@ -3,6 +3,7 @@
   import { Button } from '$components/ui/button';
   import * as DropdownMenu from '$components/ui/dropdown-menu';
   import * as Popover from '$components/ui/popover';
+  import { trackEvent } from '$lib/analytics';
   import type { Group, SceneListItemScene } from '$lib/types';
   import { stopPropagation } from '$utils';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
@@ -107,10 +108,14 @@
   {:else}
     <h1
       class="font-medium text-wrap transition-colors"
-      ondblclick={() => !dragDisabled && startEdit()}
+      ondblclick={() => {
+        if (dragDisabled) return;
+        startEdit();
+        trackEvent('group-card_edit-start', { source: 'dblClick' });
+      }}
     >
       <div class="float-right pl-2 text-sm font-normal">
-        <div class="flex -mt-1">
+        <div class="-mt-1 flex">
           <Button
             variant="ghost"
             size="sm"
@@ -167,7 +172,12 @@
 <DropdownMenu.Root bind:open={dropdownOpen}>
   <DropdownMenu.Content customAnchor={dropdownAnchor} align="end">
     <DropdownMenu.Group>
-      <DropdownMenu.Item onclick={startEdit}>
+      <DropdownMenu.Item
+        onclick={() => {
+          startEdit();
+          trackEvent('group-card_edit-start', { source: 'menu' });
+        }}
+      >
         <Pencil class="mr-2 size-4" />
         Name Bearbeiten
       </DropdownMenu.Item>
