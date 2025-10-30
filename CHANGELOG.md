@@ -60,3 +60,8 @@
 
 - Tutorial tour on first startup
 - Analytics
+
+## 1.0.1
+
+- Fix migration
+- Fix window close
