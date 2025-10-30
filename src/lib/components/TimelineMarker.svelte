@@ -21,7 +21,7 @@
 
 {#if isVisible}
   <div
-    class="pointer-events-auto cursor-pointer absolute bottom-0 -translate-x-1/2"
+    class="pointer-events-auto absolute bottom-0 -translate-x-1/2 cursor-pointer"
     style="left: {position}%"
     role="button"
     tabindex="0"
@@ -62,7 +62,7 @@
       viewBox="0 0 24 24"
       fill="currentColor"
       stroke="none"
-      class="text-primary size-4 hover:text-foreground"
+      class="text-primary hover:text-foreground size-4"
     >
       <polygon points="4,6 20,6 12,20" />
     </svg>

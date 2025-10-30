@@ -41,7 +41,7 @@
   class="border-border bg-background flex h-14 items-center gap-2 border-b px-4"
   data-tauri-drag-region
 >
-  <div class="mr-4 flex items-center gap-2" use:tutorialElement={{ id: 'main' }}>
+  <div class="mr-4 flex items-center gap-2">
     <div
       class="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded font-bold"
     >

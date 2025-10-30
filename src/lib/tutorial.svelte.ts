@@ -9,6 +9,13 @@ interface TutorialState {
   stage: { id: string; text: string } | undefined;
   firstStage: boolean;
   lastStage: boolean;
+  originalStyles?: {
+    zIndex: string;
+    pointerEvents: string;
+    tabIndex: number;
+    outline: string;
+    boxShadow: string;
+  };
 }
 
 const tutorialElements = new Map<string, HTMLElement>();
@@ -16,50 +23,59 @@ const tutorialElements = new Map<string, HTMLElement>();
 const tutorialStages = [
   {
     id: 'main',
-    text: 'Danke fürs installieren von SceneMarker. Hier ist eine kleine Tour durch das Programm, um dir die grundlegenden Funktionen zu erklären',
+    text: 'Danke, dass du SceneMarker installiert hast! Hier ist eine kurze Tour, um dir die wichtigsten Funktionen zu zeigen.',
   },
   {
     id: 'create-project-btn',
-    text: 'Hier kannst du ein neues Projekt starten, indem du ein Video auswählst',
+    text: 'Hier kannst du ein neues Projekt starten, indem du ein Video auswählst.',
   },
   {
     id: 'save-project-as-btn',
-    text: 'Wenn du das Projekt speichern möchtest, klicke hier und wähle einen Speicherort aus',
+    text: 'Wenn du dein Projekt speichern möchtest, klicke hier und wähle einen Speicherort aus.',
   },
   {
     id: 'save-project-btn',
-    text: 'Hier kannst du das Projekt auch speichern, wenn es bereits eine Datei zu diesem Projekt gibt, wird der aktuelle Stand in diese geschrieben, anderfalls verhält es sich wie bei "Projekt speichern unter"',
+    text: 'Mit diesem Knopf kannst du dein Projekt schnell speichern. Wenn es bereits eine Datei gibt, wird der aktuelle Stand dort gespeichert - sonst öffnet sich der „Speichern unter“-Dialog.',
   },
-  { id: 'load-project-btn', text: 'Mit diesem Knopf können gespeicherte Projekte geladen werden' },
+  {
+    id: 'load-project-btn',
+    text: 'Hier kannst du ein zuvor gespeichertes Projekt wieder laden.',
+  },
   {
     id: 'last-projects-btn',
-    text: 'Nachdem ein Projekt einmal geladen oder gespeichert wurde, wird es hier angezeigt',
+    text: 'Zuletzt geöffnete Projekte erscheinen hier, damit du sie schnell wieder öffnen kannst.',
   },
   {
     id: 'add-scene-btn',
-    text: "Neue Szenen werden an der aktuellen Videozeit erstellt. In den Einstellungen kann die Zeit um ein paar Sekunden nach hinten gestellt werden. Szenen können mit Drag'n'Drop organisiert und mit einem Doppelklick auf den Titel umbenannt werden",
+    text: "Mit diesem Knopf erstellst du eine neue Szene an der aktuellen Videoposition. In den Einstellungen kannst du festlegen, ob die Zeit automatisch ein paar Sekunden nach hinten verschoben wird. Szenen lassen sich per Drag'n'Drop sortieren und per Doppelklick umbenennen.",
   },
   {
     id: 'add-group-btn',
-    text: 'Szenen können gruppiert werden. Ziehe sie hierfür über den Ordner. Ordner können wie Szenen mit einem Doppelklick auf den Title umbenannt werden',
+    text: 'Hier kannst du Ordner anlegen, um Szenen zu gruppieren. Zieh einfach eine Szene auf den Ordner, um sie dort abzulegen. Ordner kannst du ebenfalls per Doppelklick umbenennen.',
   },
   {
     id: 'lock-sidebar-btn',
-    text: 'Um ein versehentliches Bearbeiten zu verhindern können die Szenen und Ordner gesperrt werden. Sie können dann nicht mehr verschoben und per Doppelklick umbenannt werden',
+    text: 'Wenn du vermeiden willst, dass du Szenen oder Ordner aus Versehen verschiebst oder umbenennst, kannst du sie hier sperren.',
   },
-  { id: 'hide-sidebar-btn', text: 'Blendet die Seitenleiste aus/ein' },
-  { id: 'filter-input', text: 'Suche nach Szenen- oder Gruppennamen' },
+  {
+    id: 'hide-sidebar-btn',
+    text: 'Blende die Seitenleiste hier ein oder aus.',
+  },
+  {
+    id: 'filter-input',
+    text: 'Suche hier nach Szenen- oder Ordnernamen, um schneller zu finden, was du suchst.',
+  },
   {
     id: 'items-area',
-    text: 'Hier erscheinen alle Szenen und Gruppen. Ob neue Elemente oben oder unten in der Liste eingefügt werden kann in den einstellungen geändert werden',
+    text: 'In diesem Bereich siehst du alle deine Szenen und Gruppen. Ob neue Elemente oben oder unten eingefügt werden, kannst du in den Einstellungen festlegen.',
   },
   {
     id: 'settings-btn',
-    text: 'Wenn du irgendwas ändern möchtest, schaue hier in den Einstellungen nach',
+    text: 'Wenn du etwas anpassen möchtest - z. B. Tastenkürzel, Design oder Verhalten - findest du alles hier in den Einstellungen.',
   },
   {
     id: 'tour-btn',
-    text: 'Geschafft! Viel Spaß! Falls du die Tour nochmal sehen möchtest klicke hier',
+    text: 'Geschafft! Viel Spaß mit SceneMarker! Wenn du die Tour später nochmal sehen möchtest, klicke einfach hier.',
   },
 ] as const;
 
@@ -100,20 +116,33 @@ function handleStage() {
   const element = tutorialElements.get(tutorialState.stage.id);
   tutorialState.element = element;
 
-  if (element) {
-    element.style.zIndex = '1000';
-    element.style.pointerEvents = 'none';
-    element.tabIndex = -1;
-  } else {
+  if (!element) {
     nextStage();
+    return;
   }
+
+  tutorialState.originalStyles = {
+    zIndex: element.style.zIndex,
+    pointerEvents: element.style.pointerEvents,
+    outline: element.style.outline,
+    boxShadow: element.style.boxShadow,
+    tabIndex: element.tabIndex,
+  };
+
+  element.style.zIndex = '1000';
+  element.style.pointerEvents = 'none';
+  element.tabIndex = -1;
+  element.style.outline = '3px solid #FFD600';
+  element.style.boxShadow = '0 0 0 5px rgba(255, 214, 0, 0.5), 0 4px 20px 2px rgba(0,0,0,0.18)';
 }
 
 function clearCurrent() {
-  if (tutorialState.element) {
-    tutorialState.element.style.zIndex = 'unset';
-    tutorialState.element.style.pointerEvents = 'auto';
-    tutorialState.element.tabIndex = 0;
+  if (tutorialState.element && tutorialState.originalStyles) {
+    tutorialState.element.style.zIndex = tutorialState.originalStyles.zIndex;
+    tutorialState.element.style.pointerEvents = tutorialState.originalStyles.pointerEvents;
+    tutorialState.element.tabIndex = tutorialState.originalStyles.tabIndex;
+    tutorialState.element.style.boxShadow = tutorialState.originalStyles.boxShadow;
+    tutorialState.element.style.outline = tutorialState.originalStyles.outline;
   }
 }
 

@@ -57,7 +57,7 @@
     appState.uiState.lockSidebar = !appState.uiState.lockSidebar;
     trackEvent('sidebar_locked', { value: String(appState.uiState.lockSidebar) });
   }
-  
+
   function toggleShowSidebar() {
     appState.uiState.showSidebar = !appState.uiState.showSidebar;
     trackEvent('sidebar_visible', { value: String(appState.uiState.showSidebar) });
