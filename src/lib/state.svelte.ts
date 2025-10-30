@@ -31,10 +31,10 @@ class AppState implements LibState {
   });
   settings = $state<SettingsState>({
     theme: 'dark',
-    openLastProjectOnStartup: false,
     itemPlaceLocation: 'bottom',
     skipIntervall: '5',
     shiftSceneTime: '0',
+    sendAnonymousStatistics: 'true',
   });
 
   constructor() {

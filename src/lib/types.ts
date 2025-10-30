@@ -63,10 +63,10 @@ export interface UiState {
 
 export interface SettingsState {
   theme: 'system' | 'light' | 'dark';
-  openLastProjectOnStartup: boolean;
   itemPlaceLocation: 'top' | 'bottom';
   skipIntervall: string;
   shiftSceneTime: string;
+  sendAnonymousStatistics: 'true' | 'false';
 }
 
 export interface ProjectMetadata {

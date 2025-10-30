@@ -122,6 +122,20 @@
             />
           </SettingsEntry>
         </SettingsSection>
+        <SettingsSection title="Analyse">
+          <SettingsEntry
+            title="Sende anonyme und nicht nachverfolgbare Statistiken, um die App zu verbessern"
+          >
+            <Dropdown
+              bind:value={appState.settings.sendAnonymousStatistics}
+              onValueChange={(value) => trackEvent('send-statistics_changes', { enabled: value })}
+              items={[
+                { label: 'Ja, gerne', value: 'true' },
+                { label: 'Nein, ich möchte das nicht', value: 'false' },
+              ]}
+            />
+          </SettingsEntry>
+        </SettingsSection>
       </Tabs.Content>
       <Tabs.Content class="grid content-start gap-4 overflow-y-auto pr-2" value="keyboard">
         <SettingsSection title="Allgemein">
