@@ -10,11 +10,8 @@ interface TutorialState {
   firstStage: boolean;
   lastStage: boolean;
   originalStyles?: {
-    zIndex: string;
-    pointerEvents: string;
+    hidden: boolean;
     tabIndex: number;
-    outline: string;
-    boxShadow: string;
   };
 }
 
@@ -89,8 +86,18 @@ export let tutorialState = $state<TutorialState>({
   lastStage: true,
 });
 
-export const tutorialElement: Action<HTMLElement, { id: string }> = (node, params) => {
+export const tutorialElement: Action<HTMLElement, { id: string; hidden?: boolean }> = (
+  node,
+  params
+) => {
+  if (params.hidden) node.classList.add('hidden');
   tutorialElements.set(params.id, node);
+
+  return {
+    destroy() {
+      tutorialElements.delete(params.id);
+    },
+  };
 };
 
 export const startTutorial = () => {
@@ -122,27 +129,19 @@ function handleStage() {
   }
 
   tutorialState.originalStyles = {
-    zIndex: element.style.zIndex,
-    pointerEvents: element.style.pointerEvents,
-    outline: element.style.outline,
-    boxShadow: element.style.boxShadow,
+    hidden: element.classList.contains('hidden'),
     tabIndex: element.tabIndex,
   };
 
-  element.style.zIndex = '1000';
-  element.style.pointerEvents = 'none';
-  element.tabIndex = -1;
-  element.style.outline = '3px solid #FFD600';
-  element.style.boxShadow = '0 0 0 5px rgba(255, 214, 0, 0.5), 0 4px 20px 2px rgba(0,0,0,0.18)';
+  element.dataset.tutorialHighlight = 'true';
+  element.classList.remove('hidden');
 }
 
 function clearCurrent() {
   if (tutorialState.element && tutorialState.originalStyles) {
-    tutorialState.element.style.zIndex = tutorialState.originalStyles.zIndex;
-    tutorialState.element.style.pointerEvents = tutorialState.originalStyles.pointerEvents;
+    delete tutorialState.element.dataset.tutorialHighlight;
+    if (tutorialState.originalStyles.hidden) tutorialState.element.classList.add('hidden');
     tutorialState.element.tabIndex = tutorialState.originalStyles.tabIndex;
-    tutorialState.element.style.boxShadow = tutorialState.originalStyles.boxShadow;
-    tutorialState.element.style.outline = tutorialState.originalStyles.outline;
   }
 }
 

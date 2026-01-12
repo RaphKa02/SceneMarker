@@ -10,6 +10,7 @@
   import Pencil from '@lucide/svelte/icons/pencil';
   import Trash from '@lucide/svelte/icons/trash';
   import { onMount, tick } from 'svelte';
+  import { flip } from 'svelte/animate';
 
   interface Props {
     scene: Scene;
@@ -120,7 +121,7 @@
         <Button
           variant="ghost"
           size="sm"
-          class="text-foreground px-0! opacity-0 group-hover/sc:opacity-100"
+          class="text-foreground px-0! opacity-0 group-focus-within/sc:opacity-100 group-hover/sc:opacity-100"
           aria-label="Open dropdown"
           onclick={stopPropagation(() => (dropdownOpen = true))}
           bind:ref={dropdownAnchor}

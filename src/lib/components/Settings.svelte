@@ -1,6 +1,7 @@
 <script lang="ts">
   import Dropdown from '$components/settings/Dropdown.svelte';
   import KeyRemapper from '$components/settings/KeyRemapper.svelte';
+  import remapperState from '$components/settings/remapperState.svelte';
   import SettingsEntry from '$components/settings/SettingsEntry.svelte';
   import SettingsSection from '$components/settings/SettingsSection.svelte';
   import { buttonVariants } from '$components/ui/button';
@@ -18,7 +19,10 @@
   } as const;
 </script>
 
-<Dialog.Root bind:open={appState.uiState.showSettings}>
+<Dialog.Root
+  bind:open={appState.uiState.showSettings}
+  onOpenChange={(open) => !open && (remapperState.activeEditAction = null)}
+>
   <Dialog.Content
     class="flex flex-col sm:h-1/2 sm:max-w-1/2"
     showCloseButton={false}

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import SceneCard from '$components/scene-list/SceneCard.svelte';
-  import SceneGroup from '$components/scene-list/SceneGroup.svelte';
+  import SceneCard from '$components/sidebar/SceneCard.svelte';
+  import SceneGroup from '$components/sidebar/SceneGroup.svelte';
   import { trackEvent } from '$lib/analytics';
   import type { SceneListItem } from '$lib/types';
   import { dndzone, TRIGGERS, type DndEvent } from 'svelte-dnd-action';

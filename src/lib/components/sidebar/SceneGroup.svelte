@@ -1,5 +1,5 @@
 <script lang="ts">
-  import SceneCard from '$components/scene-list/SceneCard.svelte';
+  import SceneCard from '$components/sidebar/SceneCard.svelte';
   import { Button } from '$components/ui/button';
   import * as DropdownMenu from '$components/ui/dropdown-menu';
   import * as Popover from '$components/ui/popover';

@@ -213,13 +213,15 @@
   }
 </script>
 
-<div class="relative flex flex-col overflow-hidden rounded-lg bg-black shadow-2xl">
+<div
+  class="bg-background relative max-h-full w-full items-center overflow-hidden rounded-lg shadow-2xl"
+>
   {#if videoState.videoPath && !hasVideoError}
     <video
       bind:this={videoElement}
       bind:currentTime
       bind:playbackRate={appState.videoSpeed}
-      class="h-full w-full bg-black object-contain outline-none"
+      class="max-h-full w-full bg-black object-contain outline-none"
       onloadedmetadata={handleLoadedMetadata}
       onplay={handlePlay}
       onpause={handlePause}
@@ -430,7 +432,7 @@
       </div>
     </div>
   {:else if hasVideoError}
-    <div class="bg-background flex aspect-video items-center justify-center">
+    <div class="bg-background flex aspect-video max-h-full items-center justify-center">
       <div class="text-muted-foreground flex flex-col items-center gap-6 px-8">
         <svg
           class="text-destructive mx-auto h-20 w-20"
@@ -469,7 +471,7 @@
       </div>
     </div>
   {:else}
-    <div class="bg-background flex aspect-video items-center justify-center">
+    <div class="bg-background flex aspect-video max-h-full items-center justify-center">
       <div class="text-muted-foreground text-center">
         <svg
           class="mx-auto mb-4 h-24 w-24 opacity-50"

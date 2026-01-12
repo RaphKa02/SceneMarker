@@ -1,19 +1,19 @@
 <script lang="ts">
-  import SceneList from '$components/scene-list/SceneList.svelte';
   import Settings from '$components/Settings.svelte';
+  import Sidebar from '$components/sidebar/Sidebar.svelte';
   import TopBar from '$components/TopBar.svelte';
   import Tutorial from '$components/Tutorial.svelte';
-  import { Button } from '$components/ui/button';
+  import * as Resizable from '$components/ui/resizable';
   import UpdateAlert from '$components/UpdateAlert.svelte';
   import VideoPlayer from '$components/VideoPlayer.svelte';
   import WindowControlls from '$components/WindowControlls.svelte';
+  import { trackEvent } from '$lib/analytics';
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import logger from '$lib/logger';
   import { convertProject } from '$lib/migrationManager';
   import { appState } from '$lib/state.svelte';
   import type { SceneListItem, VideoState } from '$lib/types';
   import { convertFile } from '$utils';
-  import Eye from '@lucide/svelte/icons/eye';
   import { invoke } from '@tauri-apps/api/core';
   import { emitTo } from '@tauri-apps/api/event';
   import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
@@ -28,9 +28,8 @@
   import { onMount, tick } from 'svelte';
   import { toast } from 'svelte-sonner';
   import { dev, number, version } from '../build.json';
-  import { trackEvent } from '$lib/analytics';
 
-  let isResizing = $state(false);
+  let sidebarPane = $state<ReturnType<typeof Resizable.Pane>>();
 
   onMount(() => {
     logger.log(`SceneMarker ${version} ${number}`);
@@ -58,6 +57,11 @@
 
   $effect(() => {
     keyHandler.disable(appState.uiState.showSettings);
+  });
+
+  $effect(() => {
+    if (appState.uiState.showSidebar) sidebarPane?.expand();
+    else sidebarPane?.collapse();
   });
 
   async function processArgs() {
@@ -259,29 +263,6 @@
     trackEvent('recent-project_deleted');
   }
 
-  function startResizing(e: Event) {
-    e.preventDefault();
-    e.stopPropagation();
-    isResizing = true;
-    document.addEventListener('mousemove', resize);
-    document.addEventListener('mouseup', stopResizing);
-
-    trackEvent('resize_started');
-  }
-
-  function resize(e: MouseEvent) {
-    if (isResizing) {
-      const newWidth = window.innerWidth - e.clientX;
-      appState.uiState.sidebarWidth = newWidth;
-    }
-  }
-
-  function stopResizing() {
-    isResizing = false;
-    document.removeEventListener('mousemove', resize);
-    document.removeEventListener('mouseup', stopResizing);
-  }
-
   async function togglePresentationMode() {
     const windows = await getAllWindows();
     let presentationWindow = windows.find((window) => window.label === 'presentation');
@@ -381,47 +362,37 @@
     onDeleteProjectMetadata={deleteProjectMetadata}
   />
 
-  <div class="flex flex-1 overflow-hidden">
-    <main class="flex flex-1 flex-col p-4">
-      <VideoPlayer
-        videoPath={appState.project.videoPath}
-        bind:currentTime={appState.currentTime}
-        onRelocateVideo={() => openVideoDialog(false)}
-        onTogglePresenationMode={togglePresentationMode}
-      />
-    </main>
-
-    {#if appState.uiState.showSidebar}
-      <aside
-        class="border-border relative max-w-2xl min-w-48 border-l"
-        style="width: {appState.uiState.sidebarWidth}px;"
-      >
-        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-        <div
-          class="hover:bg-border absolute top-0 left-0 h-full w-1 cursor-col-resize"
-          onmousedown={startResizing}
-          role="separator"
-        ></div>
-        <SceneList
-          bind:listItems={appState.project.sceneListItems}
-          onJumpToScene={jumpToScene}
-          onAddScene={addScene}
-          onAddGroup={addGroup}
-          onShowSettings={showSettings}
+  <Resizable.PaneGroup direction="horizontal">
+    <Resizable.Pane defaultSize={80} order={1}>
+      <main class="flex max-h-full w-full p-4">
+        <VideoPlayer
+          videoPath={appState.project.videoPath}
+          bind:currentTime={appState.currentTime}
+          onRelocateVideo={() => openVideoDialog(false)}
+          onTogglePresenationMode={togglePresentationMode}
         />
-      </aside>
-    {:else}
-      <Button
-        variant="outline"
-        size="icon"
-        onclick={() => (appState.uiState.showSidebar = !appState.uiState.showSidebar)}
-        title="Schaltet die Sidebar an (Strg+E)"
-        class="mt-4 mr-2"
-      >
-        <Eye />
-      </Button>
+      </main>
+    </Resizable.Pane>
+    {#if appState.uiState.showSidebar}
+      <Resizable.Handle />
     {/if}
-  </div>
+    <Resizable.Pane
+      minSize={10}
+      maxSize={80}
+      order={2}
+      collapsible
+      collapsedSize={4}
+      bind:this={sidebarPane}
+    >
+      <Sidebar
+        bind:listItems={appState.project.sceneListItems}
+        onJumpToScene={jumpToScene}
+        onAddScene={addScene}
+        onAddGroup={addGroup}
+        onShowSettings={showSettings}
+      />
+    </Resizable.Pane>
+  </Resizable.PaneGroup>
 </div>
 
 {#if appState.uiState.showSettings}

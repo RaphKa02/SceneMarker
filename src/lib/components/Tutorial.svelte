@@ -63,3 +63,18 @@
     </Popover.Root>
   {/key}
 {/if}
+
+<style lang="postcss">
+  @reference "tailwindcss";
+
+  :global([data-tutorial-highlight='true']) {
+    z-index: 1000 !important;
+    pointer-events: none !important;
+    outline: 3px solid var(--color-primary) !important;
+    box-shadow:
+      0 0 0 5px var(--color-primary),
+      0 4px 20px 2px rgba(0, 0, 0, 0.18) !important;
+    transition: margin 0.2s;
+    margin: 4px;
+  }
+</style>
