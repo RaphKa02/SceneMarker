@@ -3,21 +3,21 @@
   import * as DropdownMenu from '$components/ui/dropdown-menu';
   import * as Popover from '$components/ui/popover';
   import { trackEvent } from '$lib/analytics';
+  import { projectManager } from '$lib/projectManager.svelte';
   import { appState } from '$lib/state.svelte';
   import type { Scene } from '$lib/types';
-  import { formatTime, stopPropagation } from '$utils';
+  import { videoPlayerState } from '$lib/videoPlayerState.svelte';
+  import { formatTime, getFileName, stopPropagation } from '$utils';
   import EllipsisVertical from '@lucide/svelte/icons/ellipsis-vertical';
   import Pencil from '@lucide/svelte/icons/pencil';
   import Trash from '@lucide/svelte/icons/trash';
   import { onMount, tick } from 'svelte';
-  import { flip } from 'svelte/animate';
 
   interface Props {
     scene: Scene;
     editingId: string | null;
     locked: boolean;
     newCreated: boolean;
-    onJumpToScene: (time: number) => void;
     onDeleteScene: () => void;
   }
 
@@ -26,7 +26,6 @@
     editingId = $bindable(null),
     locked,
     newCreated = $bindable(),
-    onJumpToScene,
     onDeleteScene,
   }: Props = $props();
 
@@ -38,6 +37,12 @@
   let inputRef = $state<HTMLInputElement | null>(null);
 
   const editing = $derived(editingId === scene.id);
+
+  const videoSource = $derived(
+    scene.videoSourceId ? appState.project.videoLibrary.get(scene.videoSourceId) : undefined
+  );
+
+  const hasMultipleVideos = $derived(appState.project.videoLibrary.size > 1);
 
   onMount(() => {
     if (newCreated) startEdit();
@@ -65,7 +70,7 @@
   }
 
   function updateSceneTime() {
-    scene.time = appState.currentTime;
+    scene.time = videoPlayerState.currentTime;
   }
 </script>
 
@@ -74,16 +79,18 @@
   class={[
     'group/sc bg-card text-card-foreground w-full rounded-xl border px-3 py-2 text-left shadow-sm transition-colors',
     !editing && 'hover:bg-input',
+    hasMultipleVideos && videoSource && 'border-l-4',
   ]}
+  style={hasMultipleVideos ? `border-left-color: ${videoSource?.color}` : ''}
   onclick={(e) => {
     e.stopPropagation();
     if (!editing) {
-      onJumpToScene(scene.time);
+      projectManager.jumpToScene(scene.time, scene.videoSourceId);
     }
   }}
   onkeypress={(e) => {
     if (e.key === 'ENTER' && !editing) {
-      onJumpToScene(scene.time);
+      projectManager.jumpToScene(scene.time, scene.videoSourceId);
     }
   }}
   role="button"
@@ -131,8 +138,8 @@
       </div>
       {scene.title}
     </h1>
-    <div class="text-muted-foreground mt-1 font-mono text-xs">
-      {formatTime(scene.time)}
+    <div class="text-muted-foreground mt-1 flex items-center gap-1.5">
+      <span class="font-mono text-xs">{formatTime(scene.time)}</span>
     </div>
   {/if}
 </div>
@@ -142,7 +149,7 @@
     <DropdownMenu.Group>
       <DropdownMenu.Item
         onclick={() => {
-          startEdit;
+          startEdit();
           trackEvent('scene-card_edit-start', { source: 'menu' });
         }}
       >

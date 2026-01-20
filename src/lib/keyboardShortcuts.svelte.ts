@@ -98,6 +98,14 @@ class KeyHandler {
     this.#customBindings.delete(normalizedCombo);
   }
 
+  restoreDefault(identifier: string) {
+    for (const [key, value] of this.#customBindings.entries()) {
+      if (value === identifier) {
+        this.#customBindings.delete(key);
+      }
+    }
+  }
+
   removeAction(identifier: string) {
     this.#actions.delete(identifier);
   }
@@ -122,11 +130,7 @@ class KeyHandler {
         return beautify ? combo.toUpperCase().replaceAll('+', ' + ') : combo;
       }
     }
-    return undefined;
-  }
-
-  getBindings() {
-    return Object.fromEntries(this.#customBindings);
+    return '';
   }
 
   setDefaultBindings(bindings: Record<string, string>) {

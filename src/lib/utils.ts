@@ -57,3 +57,27 @@ export function convertFile(filePath: string) {
     logger.error(`Fehler bei convertFileSrc: ${e}`);
   }
 }
+
+/**
+ * Returns a human-readable path for UI:
+ * - strips the Tauri asset prefix
+ * - decodes URL-encoded characters
+ */
+export function getDisplayPath(path: string): string {
+  const withoutPrefix = path.replace('http://asset.localhost/', '');
+  try {
+    return decodeURIComponent(withoutPrefix);
+  } catch {
+    return withoutPrefix;
+  }
+}
+
+export function getFileName(path: string) {
+  const displayPath = getDisplayPath(path);
+  // Splits by / or \ and takes the last part
+  return displayPath.split(/[\\/]/).pop() ?? displayPath;
+}
+
+export function getRandomColor() {
+  return '#' + Math.floor(Math.random() * 16777215).toString(16);
+}

@@ -143,6 +143,7 @@
       </Tabs.Content>
       <Tabs.Content class="grid content-start gap-4 overflow-y-auto pr-2" value="keyboard">
         <SettingsSection title="Allgemein">
+          <KeyRemapper actionId="create-project" title="Projekt erstellen" />
           <KeyRemapper actionId="load-project" title="Projekt laden" />
           <KeyRemapper actionId="open-video-dialog" title="Video öffnen" />
           <KeyRemapper actionId="save-project-at" title="Projekt speichen unter" />
@@ -154,10 +155,11 @@
           <KeyRemapper actionId="skip-back" title="Springe -5s" />
         </SettingsSection>
         <SettingsSection title="Seitenleiste">
+          <KeyRemapper actionId="toggle-sidebar" title="Sichtbar an/aus" />
+          <KeyRemapper actionId="toggle-videofiles" title="Videodateien an/aus" />
+          <KeyRemapper actionId="toggle-locked" title="Sperren an/aus" />
           <KeyRemapper actionId="add-scene" title="Neue Szene" />
           <KeyRemapper actionId="add-group" title="Neue Gruppe" />
-          <KeyRemapper actionId="toggle-locked" title="Sperren an/aus" />
-          <KeyRemapper actionId="toggle-sidebar" title="Sichtbar an/aus" />
         </SettingsSection>
       </Tabs.Content>
     </Tabs.Root>

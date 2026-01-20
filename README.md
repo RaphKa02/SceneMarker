@@ -1,6 +1,6 @@
 # 🎬 SceneMarker
 
-![Version](https://img.shields.io/badge/version-1.0.2-blue)
+![Version](https://img.shields.io/badge/version-1.1.0-blue)
 ![License](https://img.shields.io/badge/license-GPL_3.0-green)
 ![Platform](https://img.shields.io/badge/platform-Windows-blue)
 

@@ -10,10 +10,9 @@
     items: SceneListItem[];
     locked?: boolean;
     searchQuery: string;
-    onJumpToScene: (time: number) => void;
   }
 
-  let { items = $bindable(), locked = false, searchQuery, onJumpToScene }: Props = $props();
+  let { items = $bindable(), locked = false, searchQuery }: Props = $props();
 
   let isDraggingGroup = $state(false);
   let editingId = $state<string | null>(null);
@@ -90,7 +89,6 @@
             item.items = item.items.filter((sceneItem) => sceneItem.id !== id);
             trackEvent('scene-card_deleted');
           }}
-          {onJumpToScene}
           onDeleteGroup={() => {
             deleteItem(item.id);
             trackEvent('scene-group_deleted');
@@ -102,7 +100,6 @@
           bind:editingId
           bind:newCreated={item.new}
           {locked}
-          {onJumpToScene}
           onDeleteScene={() => {
             deleteItem(item.id);
             trackEvent('scene-card_deleted');

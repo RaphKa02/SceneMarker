@@ -21,7 +21,6 @@
     editingId: string | null;
     dropFromOthersDisabled: boolean;
     newCreated: boolean;
-    onJumpToScene: (time: number) => void;
     onDeleteScene: (id: string) => void;
     onDeleteGroup: () => void;
   }
@@ -34,7 +33,6 @@
     dropFromOthersDisabled,
     newCreated = $bindable(),
     onDeleteScene,
-    onJumpToScene,
     onDeleteGroup,
   }: Props = $props();
 
@@ -160,7 +158,6 @@
             bind:newCreated={item.new}
             locked={dragDisabled}
             bind:scene={item.scene}
-            {onJumpToScene}
             onDeleteScene={() => onDeleteScene(item.id)}
           />
         </div>

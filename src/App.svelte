@@ -1,19 +1,19 @@
 <script lang="ts">
-  import Settings from '$components/Settings.svelte';
+  import Settings from '$components/settings/Settings.svelte';
   import Sidebar from '$components/sidebar/Sidebar.svelte';
-  import TopBar from '$components/TopBar.svelte';
+  import TopBar from '$components/topBar/TopBar.svelte';
   import Tutorial from '$components/Tutorial.svelte';
   import * as Resizable from '$components/ui/resizable';
   import UpdateAlert from '$components/UpdateAlert.svelte';
-  import VideoPlayer from '$components/VideoPlayer.svelte';
+  import VideoPlayer from '$components/videoPlayer/VideoPlayer.svelte';
   import WindowControlls from '$components/WindowControlls.svelte';
   import { trackEvent } from '$lib/analytics';
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import logger from '$lib/logger';
-  import { convertProject } from '$lib/migrationManager';
+  import { projectManager } from '$lib/projectManager.svelte';
   import { appState } from '$lib/state.svelte';
-  import type { SceneListItem, VideoState } from '$lib/types';
-  import { convertFile } from '$utils';
+  import type { VideoState } from '$lib/types';
+  import { videoPlayerState } from '$lib/videoPlayerState.svelte';
   import { invoke } from '@tauri-apps/api/core';
   import { emitTo } from '@tauri-apps/api/event';
   import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
@@ -23,9 +23,7 @@
     getAllWindows,
     getCurrentWindow,
   } from '@tauri-apps/api/window';
-  import { ask, open, save } from '@tauri-apps/plugin-dialog';
-  import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
-  import { onMount, tick } from 'svelte';
+  import { onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
   import { dev, number, version } from '../build.json';
 
@@ -39,7 +37,7 @@
 
     const unlisten = getCurrentWindow().onCloseRequested(async (event) => {
       if (dev) return;
-      if (!(await isProjectModifiedCancel())) return;
+      if (!(await projectManager.isProjectModifiedCancel())) return;
 
       event.preventDefault();
     });
@@ -48,11 +46,6 @@
       removeActions();
       (await unlisten)();
     };
-  });
-
-  $effect(() => {
-    JSON.stringify(appState.project);
-    appState.projectModified = !appState.empty;
   });
 
   $effect(() => {
@@ -68,16 +61,16 @@
     const args: string[] = await invoke('get_args');
 
     if (args[1]) {
-      loadProjectFromPath(args[1]);
+      projectManager.loadProjectFromPath(args[1]);
       trackEvent('project_loaded', { action: 'file' });
     }
   }
 
   function setActions() {
-    keyHandler.registerAction('save-project', saveProject);
-    keyHandler.registerAction('save-project-at', saveProjectAt);
-    keyHandler.registerAction('load-project', loadProject);
-    keyHandler.registerAction('open-video-dialog', openVideoDialog);
+    keyHandler.registerAction('save-project', projectManager.saveProject);
+    keyHandler.registerAction('save-project-at', projectManager.saveProjectAt);
+    keyHandler.registerAction('load-project', projectManager.loadProject);
+    keyHandler.registerAction('create-project', projectManager.createProject);
     keyHandler.registerAction('toggle-sidebar', () => {
       appState.uiState.showSidebar = !appState.uiState.showSidebar;
       trackEvent('sidebar_toggled', { value: String(appState.uiState.showSidebar) });
@@ -88,179 +81,8 @@
     keyHandler.removeAction('save-project');
     keyHandler.removeAction('save-project-at');
     keyHandler.removeAction('load-project');
-    keyHandler.removeAction('open-video-dialog');
+    keyHandler.removeAction('create-project');
     keyHandler.removeAction('toggle-sidebar');
-  }
-
-  async function openVideoDialog(reset = true) {
-    if (reset && (await isProjectModifiedCancel())) return;
-    try {
-      const selected = await open({
-        multiple: false,
-        directory: false,
-        filters: [
-          {
-            name: 'Video',
-            extensions: ['mp4', 'mkv', 'avi', 'mov'],
-          },
-        ],
-      });
-
-      if (selected) {
-        if (reset) {
-          appState.project = {
-            version,
-            sceneListItems: [],
-            videoPath: undefined,
-            filePath: undefined,
-          };
-          appState.currentTime = 0;
-          appState.playing = false;
-        }
-        const convertedPath = convertFile(selected);
-        if (!convertedPath) toast.error('Fehler beim Laden des Videos');
-        else appState.project.videoPath = convertedPath;
-      }
-    } catch (err) {
-      logger.error('Fehler beim Öffnen des Videos:', String(err));
-      toast.error('Fehler beim Öffnen des Videos');
-    }
-  }
-
-  async function saveProject() {
-    const filePath = appState.project.filePath;
-    if (!filePath) return saveProjectAt();
-
-    appState.project.version = version;
-
-    try {
-      await writeTextFile(filePath, JSON.stringify(appState.project, null, 2));
-      appState.projectModified = false;
-      appState.recentProjects.set(filePath, {
-        path: filePath,
-        lastModified: Date.now(),
-        lastAccessed: Date.now(),
-      });
-      logger.log('Projekt unter', filePath, 'gespeichert');
-      toast.success('Gespeichert');
-    } catch (err) {
-      logger.error('Fehler beim Speichern:', String(err));
-      toast.error('Fehler beim Speichern', {
-        description: 'Möglicherweise kann in den angegebenen Ort nicht geschrieben werden',
-      });
-    }
-  }
-
-  async function saveProjectAt() {
-    const savePath = await save({
-      defaultPath: decodeURIComponent(appState.project.videoPath ?? '')
-        .replace('http://asset.localhost/', '')
-        .replace(/\.[^/.]+$/, ''),
-      filters: [
-        {
-          name: 'SceneMarker Project',
-          extensions: ['smp'],
-        },
-      ],
-    });
-
-    if (savePath) {
-      appState.project.filePath = savePath;
-      saveProject();
-    }
-  }
-
-  async function loadProject() {
-    const selected = await open({
-      multiple: false,
-      filters: [
-        {
-          name: 'SceneMarker Project',
-          extensions: ['smp'],
-        },
-      ],
-    });
-    if (selected) {
-      loadProjectFromPath(selected);
-    }
-  }
-
-  async function loadProjectFromPath(filePath: string) {
-    try {
-      if (await isProjectModifiedCancel()) return;
-
-      const content = await readTextFile(filePath);
-      const { project, migrated } = convertProject(JSON.parse(content), version);
-      appState.project = project;
-
-      const projectMetadata = appState.recentProjects.get(filePath);
-      appState.recentProjects.set(filePath, {
-        path: filePath,
-        lastAccessed: Date.now(),
-        lastModified: projectMetadata?.lastModified,
-      });
-      await tick();
-      appState.projectModified = migrated;
-    } catch (err) {
-      logger.error(`Fehler beim Laden der Projektdatei: ${err}`);
-      toast.error('Fehler beim Öffnen', {
-        description:
-          'Möglicherweise wurde die Datei geändert und ist nun beschädigt oder wurde gelöscht',
-      });
-    }
-  }
-
-  function addScene() {
-    addSceneListItem({
-      type: 'scene',
-      id: crypto.randomUUID(),
-      scene: {
-        id: crypto.randomUUID(),
-        title: `Szene ${appState.sceneCount + 1}`,
-        time: Math.max(0, appState.currentTime - Number(appState.settings.shiftSceneTime)),
-      },
-      new: true,
-    });
-    trackEvent('scene_created');
-  }
-
-  function jumpToScene(time: number) {
-    appState.currentTime = time;
-
-    emitTo<VideoState>('presentation', 'video-state-update', {
-      videoPath: appState.project.videoPath,
-      currentTime: time,
-      playing: appState.playing,
-    });
-
-    trackEvent('scene_navigated_to', { type: 'card' });
-  }
-
-  function addGroup() {
-    addSceneListItem({
-      type: 'group',
-      id: crypto.randomUUID(),
-      group: {
-        id: crypto.randomUUID(),
-        name: `Gruppe ${appState.groupCount + 1}`,
-      },
-      items: [],
-      new: true,
-    });
-
-    trackEvent('group_created');
-  }
-
-  function addSceneListItem(item: SceneListItem) {
-    if (appState.settings.itemPlaceLocation === 'top')
-      appState.project.sceneListItems.unshift(item);
-    else appState.project.sceneListItems.push(item);
-  }
-
-  function deleteProjectMetadata(path: string) {
-    appState.recentProjects.delete(path);
-
-    trackEvent('recent-project_deleted');
   }
 
   async function togglePresentationMode() {
@@ -312,29 +134,13 @@
     });
     presentationWindow.once('ready', () => {
       emitTo<VideoState>('presentation', 'video-state-update', {
-        videoPath: appState.project.videoPath,
-        currentTime: appState.currentTime,
-        playing: appState.playing,
+        videoPath: appState.project.activeVideoId,
+        currentTime: videoPlayerState.currentTime,
+        playing: videoPlayerState.playing,
       });
     });
 
     trackEvent('presentation-mode_started');
-  }
-
-  function showSettings() {
-    trackEvent('settings_open');
-    appState.uiState.showSettings = true;
-  }
-
-  async function isProjectModifiedCancel() {
-    if (appState.projectModified) {
-      const confirmed = await ask(
-        'Das Projekt wurde bearbeitet und es liegen nicht gespeicherte Änderungen vor. Trotzdem fortfahren?',
-        { title: 'SceneMarker', kind: 'warning', cancelLabel: 'Nein', okLabel: 'Ja' }
-      );
-      if (!confirmed) return true;
-    }
-    return false;
   }
 </script>
 
@@ -352,23 +158,14 @@
 <WindowControlls />
 
 <div class="bg-background-dark flex h-screen flex-col">
-  <TopBar
-    projectName={appState.project.filePath?.split(/[\\/]/).pop() ?? null}
-    onOpenVideo={openVideoDialog}
-    onSaveProject={saveProject}
-    onSaveProjectAt={saveProjectAt}
-    onLoadProject={loadProject}
-    onLoadProjectFromPath={loadProjectFromPath}
-    onDeleteProjectMetadata={deleteProjectMetadata}
-  />
+  <TopBar projectName={appState.project.filePath?.split(/[\\/]/).pop() ?? null} />
 
   <Resizable.PaneGroup direction="horizontal">
     <Resizable.Pane defaultSize={80} order={1}>
       <main class="flex max-h-full w-full p-4">
         <VideoPlayer
-          videoPath={appState.project.videoPath}
-          bind:currentTime={appState.currentTime}
-          onRelocateVideo={() => openVideoDialog(false)}
+          videoPath={appState.activeVideoPath}
+          bind:currentTime={videoPlayerState.currentTime}
           onTogglePresenationMode={togglePresentationMode}
         />
       </main>
@@ -384,13 +181,7 @@
       collapsedSize={4}
       bind:this={sidebarPane}
     >
-      <Sidebar
-        bind:listItems={appState.project.sceneListItems}
-        onJumpToScene={jumpToScene}
-        onAddScene={addScene}
-        onAddGroup={addGroup}
-        onShowSettings={showSettings}
-      />
+      <Sidebar />
     </Resizable.Pane>
   </Resizable.PaneGroup>
 </div>

@@ -1,28 +1,33 @@
 import type { Store } from '@tauri-apps/plugin-store';
 import { setMode } from 'mode-watcher';
 import { SvelteMap } from 'svelte/reactivity';
-import type { LibState, Project, ProjectMetadata, SettingsState, UiState } from './types';
+import type { Project, ProjectMetadata, SettingsState, UiState } from './types';
 
-class AppState implements LibState {
+class AppState {
   version = $state('');
   #store = $state<Store>();
   updateAvailable = $state(false);
   showUpdatePopup = $state(true);
-  projectModified = $state(false);
   isPresentationMode = $state(false);
-  playing = $state(false);
-  currentTime = $state(0);
-  videoSpeed = $state(1);
+
   recentProjects = new SvelteMap<string, ProjectMetadata>([]);
+
   project = $state<Project>({
     version: '',
     filePath: undefined,
-    videoPath: undefined,
+    activeVideoId: undefined,
+    videoLibrary: new SvelteMap(),
     sceneListItems: [],
   });
+
+  #projectSnapshot = $state(this.stringify(this.project));
+
+  projectModified = $derived(this.#projectSnapshot !== this.stringify(this.project));
+
   uiState = $state<UiState>({
     sidebarWidth: 320,
     showSidebar: true,
+    showVideoFiles: true,
     lockSidebar: false,
     showSettings: false,
     settingsTab: '',
@@ -63,8 +68,10 @@ class AppState implements LibState {
     });
   }
 
-  empty = $derived(
-    !this.project.filePath && !this.project.videoPath && this.project.sceneListItems.length === 0
+  activeVideoPath = $derived(
+    this.project.activeVideoId
+      ? this.project.videoLibrary.get(this.project.activeVideoId)?.path
+      : undefined
   );
 
   sceneCount = $derived(
@@ -95,6 +102,19 @@ class AppState implements LibState {
     this.recentProjects = new SvelteMap(recentProjects.map((p) => [p.path, p]));
 
     this.#store = store;
+  }
+
+  stringify(project: Project) {
+    return JSON.stringify(project, (_, value) => {
+      if (value instanceof Map || value instanceof Set) {
+        return Array.from(value.entries());
+      }
+      return value;
+    });
+  }
+
+  resetModified() {
+    this.#projectSnapshot = this.stringify(this.project);
   }
 }
 

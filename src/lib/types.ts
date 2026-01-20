@@ -2,11 +2,20 @@ export interface Scene {
   id: string;
   title: string;
   time: number;
+  videoSourceId: string;
 }
 
 export interface Group {
   id: string;
   name: string;
+}
+
+export interface VideoSource {
+  id: string;
+  path: string;
+  name: string;
+  color: string;
+  new: boolean;
 }
 
 export interface SceneListItemScene {
@@ -29,20 +38,17 @@ export type SceneListItem = SceneListItemScene | SceneListItemGroup;
 export interface Project {
   version: string;
   filePath: string | undefined;
-  videoPath: string | undefined;
+  activeVideoId: string | undefined;
+  videoLibrary: Map<string, VideoSource>;
   sceneListItems: SceneListItem[];
 }
 
-export interface LibState {
+export interface ProjectData {
   version: string;
-  updateAvailable: boolean;
-  showUpdatePopup: boolean;
-  projectModified: boolean;
-  isPresentationMode: boolean;
-  currentTime: number;
-  playing: boolean;
-  videoSpeed: number;
-  project: Project;
+  filePath: string | undefined;
+  activeVideoId: string | undefined;
+  videoLibrary: Record<string, VideoSource>;
+  sceneListItems: SceneListItem[];
 }
 
 export interface VideoState {
@@ -54,6 +60,7 @@ export interface VideoState {
 export interface UiState {
   sidebarWidth: number;
   showSidebar: boolean;
+  showVideoFiles: boolean;
   lockSidebar: boolean;
   showSettings: boolean;
   settingsTab: string;

@@ -51,11 +51,7 @@
   <div class="flex flex-col items-end gap-1">
     <div class="flex gap-2">
       {#if !isDefault}
-        <Button
-          variant="outline"
-          size="icon"
-          onclick={() => keyHandler.unbindKey(keyHandler.getKeyCombo(actionId))}
-        >
+        <Button variant="outline" size="icon" onclick={() => keyHandler.restoreDefault(actionId)}>
           <Undo />
         </Button>
       {/if}
