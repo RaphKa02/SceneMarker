@@ -69,3 +69,8 @@
 ## 1.0.2
 
 - Fix programm freeze
+
+## 1.1.0
+
+- Add multiple videofiles to a project
+- Fix tutorial back button not working in some szenarios
