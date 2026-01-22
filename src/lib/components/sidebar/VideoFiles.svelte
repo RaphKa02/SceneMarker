@@ -47,7 +47,7 @@
         size="icon"
         onclick={toggleShowVideoFiles}
         title={`Schaltet die Videoliste aus (${keyHandler.getKeyCombo('toggle-videofiles', true)})`}
-        use={[[tutorialElement, { id: 'show-videos-btn' }]]}
+        use={[[tutorialElement, { id: 'hide-videofiles-btn' }]]}
       >
         {#if appState.uiState.showVideoFiles}
           <ChevronUp />

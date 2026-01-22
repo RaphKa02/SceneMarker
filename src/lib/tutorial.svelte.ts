@@ -1,3 +1,4 @@
+import { warn } from '$lib/logger';
 import { appState } from '$lib/state.svelte';
 import type { Action } from 'svelte/action';
 
@@ -43,6 +44,15 @@ const tutorialStages = [
     text: 'Zuletzt geöffnete Projekte erscheinen hier, damit du sie schnell wieder öffnen kannst.',
   },
   {
+    id: 'add-video-btn',
+    text: 'Ein Projekt kann mehrere Videodateien beinhalten. Klicke hier um weitere Dateien hinzuzufügen. Du kannst jeder Datei eine andere Farbe geben, um sie in der Szenenliste besser zuordnen zu können oder einen eigenen Namen vergeben.',
+  },
+  { id: 'show-videofiles-btn', text: 'Klicke hier, um die Videodateien zu verwalten.' },
+  {
+    id: 'hide-videofiles-btn',
+    text: 'Wenn du mehr Platz in der Seitenleiste benötigst, kannst du die Videodateien ausblenden. Direkt darüber erscheint dann ein Knopf, um sie wieder anzuzeigen',
+  },
+  {
     id: 'add-scene-btn',
     text: "Mit diesem Knopf erstellst du eine neue Szene an der aktuellen Videoposition. In den Einstellungen kannst du festlegen, ob die Zeit automatisch ein paar Sekunden nach hinten verschoben wird. Szenen lassen sich per Drag'n'Drop sortieren und per Doppelklick umbenennen.",
   },
@@ -55,8 +65,8 @@ const tutorialStages = [
     text: 'Wenn du vermeiden willst, dass du Szenen oder Ordner aus Versehen verschiebst oder umbenennst, kannst du sie hier sperren.',
   },
   {
-    id: 'hide-sidebar-btn',
-    text: 'Blende die Seitenleiste hier ein oder aus.',
+    id: 'toggle-filter-btn',
+    text: 'Mit diesem Knopf kannst du die Filter für die Szenen und Gruppen an- bzw. ausblenden.',
   },
   {
     id: 'filter-input',
@@ -65,6 +75,10 @@ const tutorialStages = [
   {
     id: 'items-area',
     text: 'In diesem Bereich siehst du alle deine Szenen und Gruppen. Ob neue Elemente oben oder unten eingefügt werden, kannst du in den Einstellungen festlegen.',
+  },
+  {
+    id: 'hide-sidebar-btn',
+    text: 'Blende die Seitenleiste hier ein oder aus.',
   },
   {
     id: 'settings-btn',
@@ -91,6 +105,10 @@ export const tutorialElement: Action<HTMLElement, { id: string; hidden?: boolean
   params
 ) => {
   if (params.hidden) node.classList.add('hidden');
+
+  if (!tutorialStages.some((stage) => stage.id === params.id)) {
+    warn(`TutorialStage with id <${params.id}> does not exist!`);
+  }
   tutorialElements.set(params.id, node);
 
   return {
@@ -113,7 +131,7 @@ export const stopTutorial = () => {
   appState.uiState.tutorialShown = true;
 };
 
-function handleStage() {
+function handleStage(back = false) {
   if (tutorialState.stageNumber === -1) return;
 
   tutorialState.firstStage = tutorialState.stageNumber === 0;
@@ -124,7 +142,7 @@ function handleStage() {
   tutorialState.element = element;
 
   if (!element) {
-    nextStage();
+    back ? previousStage() : nextStage();
     return;
   }
 
@@ -158,5 +176,5 @@ export const nextStage = () => {
 export const previousStage = () => {
   clearCurrent();
   tutorialState.stageNumber--;
-  handleStage();
+  handleStage(true);
 };

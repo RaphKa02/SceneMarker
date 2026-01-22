@@ -84,7 +84,7 @@
         size="icon"
         onclick={toggleShowVideoFiles}
         title={`Schaltet die Videoliste an (${keyHandler.getKeyCombo('toggle-videofiles', true)})`}
-        use={[[tutorialElement, { id: 'show-videos-btn' }]]}
+        use={[[tutorialElement, { id: 'show-videofiles-btn' }]]}
       >
         <FileVideoCamera />
       </Button>
