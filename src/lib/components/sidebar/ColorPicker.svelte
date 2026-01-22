@@ -5,9 +5,10 @@
   interface Props {
     value: string;
     open: boolean;
+    filename: string;
   }
 
-  let { value = $bindable('#ff0000'), open = $bindable(false) }: Props = $props();
+  let { value = $bindable('#ff0000'), open = $bindable(false), filename }: Props = $props();
 
   let tempColor = $state(value);
   let pickerRef = $state<HTMLDivElement>();
@@ -56,6 +57,10 @@
       <Dialog.Title>Farbe wählen</Dialog.Title>
       <Dialog.Description>
         Wähle eine Farbe, um bei mehreren Videodateien die Szenen unterscheiden zu können
+      </Dialog.Description>
+      <Dialog.Description>
+        Datei: <br />
+        {filename}
       </Dialog.Description>
     </Dialog.Header>
 

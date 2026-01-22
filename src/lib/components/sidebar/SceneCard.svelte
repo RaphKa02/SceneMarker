@@ -42,8 +42,6 @@
     scene.videoSourceId ? appState.project.videoLibrary.get(scene.videoSourceId) : undefined
   );
 
-  const hasMultipleVideos = $derived(appState.project.videoLibrary.size > 1);
-
   onMount(() => {
     if (newCreated) startEdit();
   });
@@ -79,9 +77,9 @@
   class={[
     'group/sc bg-card text-card-foreground w-full rounded-xl border px-3 py-2 text-left shadow-sm transition-colors',
     !editing && 'hover:bg-input',
-    hasMultipleVideos && videoSource && 'border-l-4',
+    appState.hasMultipleVideos && videoSource && 'border-l-4',
   ]}
-  style={hasMultipleVideos ? `border-left-color: ${videoSource?.color}` : ''}
+  style={appState.hasMultipleVideos ? `border-left-color: ${videoSource?.color}` : ''}
   onclick={(e) => {
     e.stopPropagation();
     if (!editing) {

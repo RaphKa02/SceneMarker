@@ -33,8 +33,6 @@
   const editing = $derived(editingId === videoSource.id);
   const isActive = $derived(appState.project.activeVideoId === videoSource.id);
 
-  const hasMultipleVideos = $derived(appState.project.videoLibrary.size > 1);
-
   const associatedScenesCount = $derived(
     appState.project.sceneListItems.reduce((count, item) => {
       if (item.type === 'scene') {
@@ -93,9 +91,9 @@
     'group/vf text-card-foreground w-full rounded-lg border px-3 py-2 text-left shadow-sm transition-colors',
     !editing && 'hover:bg-input',
     isActive && 'border-primary',
-    hasMultipleVideos && videoSource && 'border-l-4',
+    appState.hasMultipleVideos && videoSource && 'border-l-4',
   ]}
-  style={hasMultipleVideos ? `border-left-color: ${videoSource?.color}` : ''}
+  style={appState.hasMultipleVideos ? `border-left-color: ${videoSource?.color}` : ''}
   onclick={(e) => {
     e.stopPropagation();
     if (!editing) {
@@ -245,4 +243,5 @@
   bind:value={
     () => videoSource.color, (v) => (videoSource = { ...videoSource, color: v, new: false })
   }
+  filename={videoSource.name}
 />

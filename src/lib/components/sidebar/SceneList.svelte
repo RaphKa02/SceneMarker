@@ -1,11 +1,16 @@
 <script lang="ts">
   import DnDZone from '$components/sidebar/DnDZone.svelte';
   import { Button } from '$components/ui/button';
+  import ButtonGroup from '$components/ui/button-group/button-group.svelte';
+  import * as ToggleGroup from '$components/ui/toggle-group';
+  import { trackEvent } from '$lib/analytics';
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import { projectManager } from '$lib/projectManager.svelte';
   import { appState } from '$lib/state.svelte';
   import { tutorialElement } from '$lib/tutorial.svelte';
-  import { cn } from '$utils';
+  import ChevronDown from '@lucide/svelte/icons/chevron-down';
+  import ChevronUp from '@lucide/svelte/icons/chevron-up';
+  import CircleCheck from '@lucide/svelte/icons/circle-check';
   import FolderPlus from '@lucide/svelte/icons/folder-plus';
   import Lock from '@lucide/svelte/icons/lock';
   import LockOpen from '@lucide/svelte/icons/lock-open';
@@ -20,62 +25,74 @@
   const { toggleLockSidebar }: Props = $props();
 
   let searchQuery = $state('');
+  let videoFilter = $state<string[]>([]);
+
+  function toggleShowFilters() {
+    appState.uiState.showFilter = !appState.uiState.showFilter;
+    trackEvent('filter_visible', { value: String(appState.uiState.showFilter) });
+  }
 </script>
 
-<div class="p-2">
-  <div
-    class={cn(
-      'flex items-center justify-between',
-      !appState.uiState.showSidebar && 'justify-center'
-    )}
-  >
-    {#if appState.uiState.showSidebar}
-      <h3 class="text-lg font-semibold">
-        Szenen
-        <span class="text-muted-foreground text-lg">
-          ({appState.sceneCount})
-        </span>
-      </h3>
-    {/if}
-    <div class={cn('flex gap-2', !appState.uiState.showSidebar && 'flex-col items-center gap-2')}>
+<div class="space-y-2 p-2">
+  <div class="flex items-center justify-between">
+    <h3 class="text-lg font-semibold">
+      Szenen
+      <span class="text-muted-foreground text-lg">
+        ({appState.sceneCount})
+      </span>
+    </h3>
+    <div class="flex gap-2">
+      <ButtonGroup>
+        <Button
+          variant="default"
+          size="icon"
+          onclick={projectManager.addScene}
+          title={`Fügt eine neue Szene hinzu (${keyHandler.getKeyCombo('add-scene', true)})`}
+          use={[[tutorialElement, { id: 'add-scene-btn' }]]}
+        >
+          <Plus />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          onclick={projectManager.addGroup}
+          title={`Erstellt einen neuen Ordner (${keyHandler.getKeyCombo('add-group', true)})`}
+          use={[[tutorialElement, { id: 'add-group-btn' }]]}
+        >
+          <FolderPlus />
+        </Button>
+      </ButtonGroup>
       <Button
-        variant="default"
+        variant="outline"
         size="icon"
-        onclick={projectManager.addScene}
-        title={`Fügt eine neue Szene hinzu (${keyHandler.getKeyCombo('add-scene', true)})`}
-        use={[[tutorialElement, { id: 'add-scene-btn' }]]}
+        onclick={toggleLockSidebar}
+        title={`Schaltet drag and drop an/aus (${keyHandler.getKeyCombo('toggle-locked', true)})`}
+        use={[[tutorialElement, { id: 'lock-sidebar-btn' }]]}
       >
-        <Plus />
+        {#if appState.uiState.lockSidebar}
+          <Lock />
+        {:else}
+          <LockOpen />
+        {/if}
       </Button>
       <Button
         variant="outline"
         size="icon"
-        onclick={projectManager.addGroup}
-        title={`Erstellt einen neuen Ordner (${keyHandler.getKeyCombo('add-group', true)})`}
-        use={[[tutorialElement, { id: 'add-group-btn' }]]}
+        onclick={toggleShowFilters}
+        title={`Blendet die Filter ein/aus (${keyHandler.getKeyCombo('toggle-filter', true)})`}
+        use={[[tutorialElement, { id: 'toggle-filter-btn' }]]}
       >
-        <FolderPlus />
+        {#if appState.uiState.showFilter}
+          <ChevronUp />
+        {:else}
+          <ChevronDown />
+        {/if}
       </Button>
-      {#if appState.uiState.showSidebar}
-        <Button
-          variant="outline"
-          size="icon"
-          onclick={toggleLockSidebar}
-          title={`Schaltet drag and drop an/aus (${keyHandler.getKeyCombo('toggle-locked', true)})`}
-          use={[[tutorialElement, { id: 'lock-sidebar-btn' }]]}
-        >
-          {#if appState.uiState.lockSidebar}
-            <Lock />
-          {:else}
-            <LockOpen />
-          {/if}
-        </Button>
-      {/if}
     </div>
   </div>
 
-  {#if appState.uiState.showSidebar}
-    <div class="relative mt-3" use:tutorialElement={{ id: 'filter-input' }}>
+  {#if appState.uiState.showFilter}
+    <div class="relative" use:tutorialElement={{ id: 'filter-input' }}>
       <input
         type="text"
         name="search"
@@ -93,15 +110,36 @@
         <X />
       </Button>
     </div>
+
+    {#if appState.hasMultipleVideos}
+      <ToggleGroup.Root
+        type="multiple"
+        variant="outline"
+        spacing={2}
+        size="sm"
+        bind:value={videoFilter}
+        class="flex w-full flex-row flex-wrap gap-2 [--radius:9999rem]"
+      >
+        {#each appState.project.videoLibrary as [id, videoSource] (id)}
+          <ToggleGroup.Item
+            value={id}
+            aria-label={`${videoSource.name} umschalten`}
+            class="data-[state=on]:*:[svg]:stroke-primary data-[state=on]:border-primary max-w-full data-[state=on]:bg-transparent data-[state=off]:*:[svg]:hidden"
+          >
+            <CircleCheck />
+            <span class="truncate">{videoSource.name}</span>
+          </ToggleGroup.Item>
+        {/each}
+      </ToggleGroup.Root>
+    {/if}
   {/if}
 </div>
 
 <div class="bg-background flex-1 overflow-y-auto p-2" use:tutorialElement={{ id: 'items-area' }}>
-  {#if appState.uiState.showSidebar}
-    <DnDZone
-      bind:items={appState.project.sceneListItems}
-      locked={appState.uiState.lockSidebar}
-      {searchQuery}
-    />
-  {/if}
+  <DnDZone
+    bind:items={appState.project.sceneListItems}
+    locked={appState.uiState.lockSidebar}
+    {searchQuery}
+    {videoFilter}
+  />
 </div>

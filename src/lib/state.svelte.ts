@@ -29,6 +29,7 @@ class AppState {
     showSidebar: true,
     showVideoFiles: true,
     lockSidebar: false,
+    showFilter: true,
     showSettings: false,
     settingsTab: '',
     showTimelineMarkers: true,
@@ -91,6 +92,8 @@ class AppState {
       return count + (item.type === 'group' ? 1 : 0);
     }, 0)
   );
+
+  hasMultipleVideos = $derived(appState.project.videoLibrary.size > 1);
 
   async setStore(store: Store) {
     const uiState = await store.get<UiState>('uiState');

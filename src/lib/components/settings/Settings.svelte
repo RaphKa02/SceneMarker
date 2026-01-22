@@ -120,7 +120,8 @@
               items={[
                 { label: '1 Sekunde', value: '1' },
                 { label: '5 Sekunden', value: '5' },
-                { label: '20 Sekunden', value: '20' },
+                { label: '10 Sekunden', value: '10' },
+                { label: '30 Sekunden', value: '30' },
                 { label: '1 Minute', value: '60' },
               ]}
             />

@@ -62,6 +62,7 @@ export interface UiState {
   showSidebar: boolean;
   showVideoFiles: boolean;
   lockSidebar: boolean;
+  showFilter: boolean;
   showSettings: boolean;
   settingsTab: string;
   showTimelineMarkers: boolean;

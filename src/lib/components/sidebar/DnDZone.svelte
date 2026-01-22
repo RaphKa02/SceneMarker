@@ -10,9 +10,10 @@
     items: SceneListItem[];
     locked?: boolean;
     searchQuery: string;
+    videoFilter: string[];
   }
 
-  let { items = $bindable(), locked = false, searchQuery }: Props = $props();
+  let { items = $bindable(), locked = false, searchQuery, videoFilter }: Props = $props();
 
   let isDraggingGroup = $state(false);
   let editingId = $state<string | null>(null);
@@ -20,15 +21,20 @@
   const transformedQuery = $derived(searchQuery.trim().toLowerCase());
 
   const filteredItems = $derived.by(() => {
-    if (!transformedQuery) return items;
+    if (!transformedQuery && videoFilter.length === 0) return items;
 
     return items
       .map((item) => {
         if (item.type === 'scene') {
-          return item.scene.title.toLowerCase().includes(transformedQuery) ? item : null;
+          return videoFilter.includes(item.scene.videoSourceId) &&
+            item.scene.title.toLowerCase().includes(transformedQuery)
+            ? item
+            : null;
         } else if (item.type === 'group') {
-          const filteredScenes = item.items.filter((sceneItem) =>
-            sceneItem.scene.title.toLowerCase().includes(transformedQuery)
+          const filteredScenes = item.items.filter(
+            (sceneItem) =>
+              videoFilter.includes(sceneItem.scene.videoSourceId) &&
+              sceneItem.scene.title.toLowerCase().includes(transformedQuery)
           );
           return filteredScenes.length > 0
             ? { ...item, items: filteredScenes }

@@ -4,7 +4,6 @@
   import { projectManager } from '$lib/projectManager.svelte';
   import { appState } from '$lib/state.svelte';
   import { tutorialElement } from '$lib/tutorial.svelte';
-  import { cn } from '$utils';
   import ChevronUp from '@lucide/svelte/icons/chevron-up';
   import Plus from '@lucide/svelte/icons/plus';
   import VideoFileCard from './VideoFileCard.svelte';
@@ -23,21 +22,14 @@
 </script>
 
 <div class="p-2">
-  <div
-    class={cn(
-      'flex items-center justify-between',
-      !appState.uiState.showSidebar && 'justify-center'
-    )}
-  >
-    {#if appState.uiState.showSidebar}
-      <h3 class="text-lg font-semibold">
-        Videodateien
-        <span class="text-muted-foreground text-lg">
-          ({appState.project.videoLibrary.size})
-        </span>
-      </h3>
-    {/if}
-    <div class={cn('flex gap-2', !appState.uiState.showSidebar && 'flex-col items-center gap-2')}>
+  <div class="flex items-center justify-between">
+    <h3 class="text-lg font-semibold">
+      Videodateien
+      <span class="text-muted-foreground text-lg">
+        ({appState.project.videoLibrary.size})
+      </span>
+    </h3>
+    <div class="flex gap-2">
       <Button
         variant="default"
         size="icon"

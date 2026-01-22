@@ -1,6 +1,4 @@
 <script lang="ts">
-  import SceneList from './SceneList.svelte';
-  import VideoFiles from './VideoFiles.svelte';
   import { Button } from '$components/ui/button';
   import { trackEvent } from '$lib/analytics';
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
@@ -10,12 +8,13 @@
   import { cn } from '$utils';
   import ChevronLeft from '@lucide/svelte/icons/chevron-left';
   import ChevronRight from '@lucide/svelte/icons/chevron-right';
-  import ChevronUp from '@lucide/svelte/icons/chevron-up';
   import Download from '@lucide/svelte/icons/download';
   import FileVideoCamera from '@lucide/svelte/icons/file-video-camera';
   import Rocket from '@lucide/svelte/icons/rocket';
   import Settings from '@lucide/svelte/icons/settings';
   import { onMount } from 'svelte';
+  import SceneList from './SceneList.svelte';
+  import VideoFiles from './VideoFiles.svelte';
 
   onMount(() => {
     setActions();
@@ -79,7 +78,7 @@
         <ChevronLeft />
       {/if}
     </Button>
-    {#if !appState.uiState.showVideoFiles}
+    {#if !appState.uiState.showVideoFiles && appState.uiState.showSidebar}
       <Button
         variant="outline"
         size="icon"
@@ -91,20 +90,14 @@
       </Button>
     {/if}
   </div>
+  {#if appState.uiState.showSidebar}
+    {#if appState.uiState.showVideoFiles}
+      <VideoFiles {toggleShowVideoFiles} />
+    {/if}
 
-  {#if appState.uiState.showVideoFiles}
-    <VideoFiles {toggleShowVideoFiles} />
-  {/if}
+    <SceneList {toggleLockSidebar} />
 
-  <SceneList {toggleLockSidebar} />
-
-  <div
-    class={cn(
-      'flex justify-between p-2',
-      !appState.uiState.showSidebar && 'flex-col items-center gap-2'
-    )}
-  >
-    {#if appState.uiState.showSidebar}
+    <div class="flex justify-between p-2">
       <Button
         variant="ghost"
         size="icon"
@@ -113,22 +106,22 @@
       >
         <Rocket class="size-5" />
       </Button>
-    {/if}
-    <div class={cn('flex gap-2', !appState.uiState.showSidebar && 'flex-col items-center')}>
-      {#if appState.updateAvailable}
-        <Button variant="ghost" size="icon" onclick={() => (appState.showUpdatePopup = true)}>
-          <Download class="size-5" />
+      <div class="flex gap-2">
+        {#if appState.updateAvailable}
+          <Button variant="ghost" size="icon" onclick={() => (appState.showUpdatePopup = true)}>
+            <Download class="size-5" />
+          </Button>
+        {/if}
+        <Button
+          variant="ghost"
+          size="icon"
+          class="relative"
+          onclick={showSettings}
+          use={[[tutorialElement, { id: 'settings-btn' }]]}
+        >
+          <Settings class="size-5" />
         </Button>
-      {/if}
-      <Button
-        variant="ghost"
-        size="icon"
-        class="relative"
-        onclick={showSettings}
-        use={[[tutorialElement, { id: 'settings-btn' }]]}
-      >
-        <Settings class="size-5" />
-      </Button>
+      </div>
     </div>
-  </div>
+  {/if}
 </aside>
