@@ -74,3 +74,8 @@
 
 - Add multiple videofiles to a project
 - Fix tutorial back button not working in some szenarios
+
+## 1.1.1
+
+- Fix video filtering in groups
+- Fix presentation mode not starting

@@ -12,6 +12,8 @@ new_version="${input_version:-$next_version}"
 
 echo "Bumping version to $new_version ..."
 echo
+echo "Please update CHANGELOG.md with the release notes for version ${new_version}."
+read -p "Press any key to continue after updating CHANGELOG.md..."
 
 # --- Update version in package.json ---
 sed -i.bak -E "s/\"version\": *\"[0-9]+\.[0-9]+\.[0-9]+\"/\"version\": \"${new_version}\"/" package.json
