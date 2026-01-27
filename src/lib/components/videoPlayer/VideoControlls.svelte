@@ -20,7 +20,7 @@
   import { onMount, tick } from 'svelte';
 
   interface Props {
-    onTogglePresenationMode?: () => void;
+    onTogglePresenationMode: () => void;
     restartControllsInterval: () => void;
     skipRightActive: boolean;
     skipLeftActive: boolean;

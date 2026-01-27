@@ -13,7 +13,7 @@
   interface Props {
     videoPath?: string;
     currentTime: number;
-    onTogglePresenationMode?: () => void;
+    onTogglePresenationMode: () => void;
   }
 
   let { videoPath, currentTime = $bindable(0), onTogglePresenationMode }: Props = $props();
@@ -86,6 +86,7 @@
     {/if}
     <VideoControlls
       {restartControllsInterval}
+      {onTogglePresenationMode}
       bind:skipLeftActive
       bind:skipRightActive
       bind:skipAmount

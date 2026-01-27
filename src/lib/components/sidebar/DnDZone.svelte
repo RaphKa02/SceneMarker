@@ -38,7 +38,7 @@
           );
           return filteredScenes.length > 0
             ? { ...item, items: filteredScenes }
-            : item.group.name.toLowerCase().includes(transformedQuery)
+            : transformedQuery && item.group.name.toLowerCase().includes(transformedQuery)
               ? item
               : null;
         }

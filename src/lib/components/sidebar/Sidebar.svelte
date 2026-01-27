@@ -69,7 +69,7 @@
       variant="outline"
       size="icon"
       onclick={toggleShowSidebar}
-      title="Schaltet die Sidebar aus (Strg+E)"
+      title="Schaltet die Sidebar an/aus (Strg+E)"
       use={[[tutorialElement, { id: 'hide-sidebar-btn' }]]}
     >
       {#if appState.uiState.showSidebar}
