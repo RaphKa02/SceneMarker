@@ -158,6 +158,7 @@
         <SettingsSection title="Seitenleiste">
           <KeyRemapper actionId="toggle-sidebar" title="Sichtbar an/aus" />
           <KeyRemapper actionId="toggle-videofiles" title="Videodateien an/aus" />
+          <KeyRemapper actionId="toggle-filter" title="Videofilter an/aus" />
           <KeyRemapper actionId="toggle-locked" title="Sperren an/aus" />
           <KeyRemapper actionId="add-scene" title="Neue Szene" />
           <KeyRemapper actionId="add-group" title="Neue Gruppe" />

@@ -79,3 +79,7 @@
 
 - Fix video filtering in groups
 - Fix presentation mode not starting
+
+## 1.1.2
+
+- Add keybind setting for videofilter toggel

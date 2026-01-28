@@ -27,6 +27,7 @@
     keyHandler.registerAction('open-video-dialog', projectManager.addVideoFile);
     keyHandler.registerAction('toggle-locked', toggleLockSidebar);
     keyHandler.registerAction('toggle-videofiles', toggleShowVideoFiles);
+    keyHandler.registerAction('toggle-videofilter', toggleShowFilters);
   }
 
   function removeActions() {
@@ -35,6 +36,7 @@
     keyHandler.removeAction('open-video-dialog');
     keyHandler.removeAction('toggle-locked');
     keyHandler.removeAction('toggle-videofiles');
+    keyHandler.removeAction('toggle-videofilter');
   }
 
   function toggleLockSidebar() {
@@ -50,6 +52,11 @@
   function toggleShowVideoFiles() {
     appState.uiState.showVideoFiles = !appState.uiState.showVideoFiles;
     trackEvent('video-files_visible', { value: String(appState.uiState.showVideoFiles) });
+  }
+
+  function toggleShowFilters() {
+    appState.uiState.showFilter = !appState.uiState.showFilter;
+    trackEvent('filter_visible', { value: String(appState.uiState.showFilter) });
   }
 
   function showSettings() {
@@ -95,7 +102,7 @@
       <VideoFiles {toggleShowVideoFiles} />
     {/if}
 
-    <SceneList {toggleLockSidebar} />
+    <SceneList {toggleLockSidebar} {toggleShowFilters} />
 
     <div class="flex justify-between p-2">
       <Button

@@ -20,17 +20,13 @@
 
   interface Props {
     toggleLockSidebar: () => void;
+    toggleShowFilters: () => void;
   }
 
-  const { toggleLockSidebar }: Props = $props();
+  const { toggleLockSidebar, toggleShowFilters }: Props = $props();
 
   let searchQuery = $state('');
   let videoFilter = $state<string[]>([]);
-
-  function toggleShowFilters() {
-    appState.uiState.showFilter = !appState.uiState.showFilter;
-    trackEvent('filter_visible', { value: String(appState.uiState.showFilter) });
-  }
 </script>
 
 <div class="space-y-2 p-2">
