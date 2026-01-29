@@ -1,3 +1,4 @@
+import type { VideoState } from '$lib/types';
 import { emitTo } from '@tauri-apps/api/event';
 
 class VideoPlayerState {
@@ -11,6 +12,12 @@ class VideoPlayerState {
   videoSpeed = $state(1);
   isFullscreen = $state(false);
   showControlls = $state(false);
+
+  getStatePayload = (): VideoState => ({
+    videoPath: this.videoPath,
+    playing: this.playing,
+    currentTime: this.currentTime,
+  });
 
   togglePlay = () => {
     if (this.playing) {
@@ -27,19 +34,19 @@ class VideoPlayerState {
 
   handlePlay = () => {
     this.playing = true;
-    emitTo('presentation', 'video-state-update', this);
+    this.syncState();
   };
 
   handlePause = () => {
     this.playing = false;
-    emitTo('presentation', 'video-state-update', this);
+    this.syncState();
   };
 
   seekTo = (time: number) => {
     if (this.videoElement) {
       this.videoElement.currentTime = time;
       this.currentTime = time;
-      emitTo('presentation', 'video-state-update', this);
+      this.syncState();
     }
   };
 
@@ -47,6 +54,7 @@ class VideoPlayerState {
     if (this.videoElement) {
       this.currentTime = Math.max(0, Math.min(this.duration, this.currentTime + seconds));
       this.videoElement.currentTime = this.currentTime;
+      this.syncState();
     }
   };
 
@@ -65,6 +73,10 @@ class VideoPlayerState {
       document.exitFullscreen();
       this.isFullscreen = false;
     }
+  };
+
+  syncState = () => {
+    emitTo<VideoState>('presentation', 'video-state-update', this.getStatePayload());
   };
 }
 

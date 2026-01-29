@@ -35,8 +35,6 @@
     restartControllsInterval,
   }: Props = $props();
 
-  const skipIntervals = [0.03, 1, 3, 5, 10, 60];
-
   onMount(() => {
     addActions();
     return () => removeActions();

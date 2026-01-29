@@ -7,8 +7,6 @@
   import { appState } from '$lib/state.svelte';
   import { videoPlayerState } from '$lib/videoPlayerState.svelte';
   import { getFileName } from '$utils';
-  import { emitTo } from '@tauri-apps/api/event';
-  import { untrack } from 'svelte';
 
   interface Props {
     videoPath?: string;
@@ -29,12 +27,6 @@
   $effect(() => {
     if (videoPath) hasVideoError = false;
     videoPlayerState.videoPath = videoPath;
-
-    emitTo(
-      'presentation',
-      'video-state-update',
-      untrack(() => videoPlayerState)
-    );
   });
 
   function handleVideoClick() {

@@ -6,6 +6,7 @@
   import { trackEvent } from '$lib/analytics';
   import { appState } from '$lib/state.svelte';
   import type { VideoSource } from '$lib/types';
+  import { videoPlayerState } from '$lib/videoPlayerState.svelte';
   import { getDisplayPath, getFileName, stopPropagation } from '$utils';
   import EllipsisVertical from '@lucide/svelte/icons/ellipsis-vertical';
   import PaintBucket from '@lucide/svelte/icons/paint-bucket';
@@ -47,6 +48,14 @@
       return count;
     }, 0)
   );
+
+  async function changeSource() {
+    if (!editing) {
+      appState.project.activeVideoId = videoSource.id;
+      await tick();
+      videoPlayerState.syncState();
+    }
+  }
 
   async function startEdit() {
     editingId = videoSource.id;
@@ -96,16 +105,12 @@
   style={appState.hasMultipleVideos ? `border-left-color: ${videoSource?.color}` : ''}
   onclick={(e) => {
     e.stopPropagation();
-    if (!editing) {
-      appState.project.activeVideoId = videoSource.id;
-    }
+    changeSource();
   }}
   onkeydown={(e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      if (!editing) {
-        appState.project.activeVideoId = videoSource.id;
-      }
+      changeSource();
     }
   }}
   role="button"

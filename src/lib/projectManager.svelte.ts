@@ -2,16 +2,15 @@ import { trackEvent } from '$lib/analytics';
 import logger from '$lib/logger';
 import { convertProject } from '$lib/migrations/migrationManager';
 import { appState } from '$lib/state.svelte';
-import type { ProjectData, SceneListItem, VideoState } from '$lib/types';
+import type { ProjectData, SceneListItem } from '$lib/types';
+import { videoPlayerState } from '$lib/videoPlayerState.svelte';
 import { convertFile, getFileName, getRandomColor } from '$utils';
-import { emitTo } from '@tauri-apps/api/event';
 import { ask, open, save } from '@tauri-apps/plugin-dialog';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { tick } from 'svelte';
 import { toast } from 'svelte-sonner';
-import { version } from '../../build.json';
-import { videoPlayerState } from '$lib/videoPlayerState.svelte';
 import { SvelteMap } from 'svelte/reactivity';
+import { version } from '../../build.json';
 
 class ProjectManager {
   createProject = async () => {
@@ -192,13 +191,9 @@ class ProjectManager {
   jumpToScene = async (time: number, videoSourceId: string) => {
     appState.project.activeVideoId = videoSourceId;
     await tick();
-    videoPlayerState.currentTime = time;
 
-    emitTo<VideoState>('presentation', 'video-state-update', {
-      videoPath: appState.activeVideoPath,
-      currentTime: time,
-      playing: videoPlayerState.playing,
-    });
+    videoPlayerState.currentTime = time;
+    videoPlayerState.syncState();
 
     trackEvent('scene_navigated_to', { type: 'card' });
   };

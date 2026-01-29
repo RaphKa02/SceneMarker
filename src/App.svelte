@@ -12,10 +12,8 @@
   import logger from '$lib/logger';
   import { projectManager } from '$lib/projectManager.svelte';
   import { appState } from '$lib/state.svelte';
-  import type { VideoState } from '$lib/types';
   import { videoPlayerState } from '$lib/videoPlayerState.svelte';
   import { invoke } from '@tauri-apps/api/core';
-  import { emitTo } from '@tauri-apps/api/event';
   import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
   import {
     availableMonitors,
@@ -133,11 +131,7 @@
       appState.isPresentationMode = false;
     });
     presentationWindow.once('ready', () => {
-      emitTo<VideoState>('presentation', 'video-state-update', {
-        videoPath: appState.project.activeVideoId,
-        currentTime: videoPlayerState.currentTime,
-        playing: videoPlayerState.playing,
-      });
+      videoPlayerState.syncState();
     });
 
     trackEvent('presentation-mode_started');
