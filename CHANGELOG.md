@@ -83,3 +83,7 @@
 ## 1.1.2
 
 - Add keybind setting for videofilter toggel
+
+## 1.1.3
+
+- Fix presentation mode not updating
