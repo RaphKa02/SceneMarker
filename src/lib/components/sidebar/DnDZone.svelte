@@ -2,7 +2,7 @@
   import SceneCard from '$components/sidebar/SceneCard.svelte';
   import SceneGroup from '$components/sidebar/SceneGroup.svelte';
   import { trackEvent } from '$lib/analytics';
-  import type { SceneListItem } from '$lib/types';
+  import type { SceneListItem, SceneListItemScene } from '$lib/types';
   import { dndzone, TRIGGERS, type DndEvent } from 'svelte-dnd-action';
   import { flip } from 'svelte/animate';
 
@@ -25,22 +25,30 @@
 
     return items
       .map((item) => {
-        if (item.type === 'scene') {
-          return videoFilter.includes(item.scene.videoSourceId) &&
+        const matchesFilter = (item: SceneListItemScene): boolean => {
+          return (
+            (videoFilter.length === 0 || videoFilter.includes(item.scene.videoSourceId)) &&
             item.scene.title.toLowerCase().includes(transformedQuery)
-            ? item
-            : null;
-        } else if (item.type === 'group') {
-          const filteredScenes = item.items.filter(
-            (sceneItem) =>
-              videoFilter.includes(sceneItem.scene.videoSourceId) &&
-              sceneItem.scene.title.toLowerCase().includes(transformedQuery)
           );
-          return filteredScenes.length > 0
-            ? { ...item, items: filteredScenes }
-            : transformedQuery && item.group.name.toLowerCase().includes(transformedQuery)
-              ? item
-              : null;
+        };
+        if (item.type === 'scene') {
+          return matchesFilter(item) ? item : null;
+        } else if (item.type === 'group') {
+          const filteredScenes = item.items.filter(matchesFilter);
+
+          if (filteredScenes.length > 0) {
+            return { ...item, items: filteredScenes };
+          }
+
+          if (transformedQuery && item.group.name.toLowerCase().includes(transformedQuery)) {
+            const scenesMatchingVideo = item.items.filter(
+              (sceneItem) =>
+                videoFilter.length === 0 || videoFilter.includes(sceneItem.scene.videoSourceId)
+            );
+            return { ...item, items: scenesMatchingVideo };
+          }
+
+          return null;
         }
         return null;
       })

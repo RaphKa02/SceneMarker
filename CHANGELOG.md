@@ -87,3 +87,7 @@
 ## 1.1.3
 
 - Fix presentation mode not updating
+
+## 1.1.4
+
+- Fix filter for scenes and groups

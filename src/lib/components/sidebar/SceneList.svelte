@@ -3,7 +3,6 @@
   import { Button } from '$components/ui/button';
   import ButtonGroup from '$components/ui/button-group/button-group.svelte';
   import * as ToggleGroup from '$components/ui/toggle-group';
-  import { trackEvent } from '$lib/analytics';
   import { keyHandler } from '$lib/keyboardShortcuts.svelte';
   import { projectManager } from '$lib/projectManager.svelte';
   import { appState } from '$lib/state.svelte';
