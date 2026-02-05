@@ -11,12 +11,18 @@
     locked?: boolean;
     searchQuery: string;
     videoFilter: string[];
+    editingId: string | null;
   }
 
-  let { items = $bindable(), locked = false, searchQuery, videoFilter }: Props = $props();
+  let {
+    items = $bindable(),
+    locked = false,
+    searchQuery,
+    videoFilter,
+    editingId = $bindable(null),
+  }: Props = $props();
 
   let isDraggingGroup = $state(false);
-  let editingId = $state<string | null>(null);
 
   const transformedQuery = $derived(searchQuery.trim().toLowerCase());
 
@@ -25,27 +31,38 @@
 
     return items
       .map((item) => {
-        const matchesFilter = (item: SceneListItemScene): boolean => {
+        const matchesFilter = (sceneItem: SceneListItemScene): boolean => {
           return (
-            (videoFilter.length === 0 || videoFilter.includes(item.scene.videoSourceId)) &&
-            item.scene.title.toLowerCase().includes(transformedQuery)
+            sceneItem.scene.id === editingId ||
+            ((videoFilter.length === 0 || videoFilter.includes(sceneItem.scene.videoSourceId)) &&
+              sceneItem.scene.title.toLowerCase().includes(transformedQuery))
           );
         };
+
         if (item.type === 'scene') {
           return matchesFilter(item) ? item : null;
         } else if (item.type === 'group') {
           const filteredScenes = item.items.filter(matchesFilter);
 
-          if (filteredScenes.length > 0) {
-            return { ...item, items: filteredScenes };
-          }
-
+          // Priority 1: Group Name Match
+          // If the group name matches the query, show the group and ALL items that belong to the current video filter.
+          // We relax the text search for children here to show the group's "context".
           if (transformedQuery && item.group.name.toLowerCase().includes(transformedQuery)) {
             const scenesMatchingVideo = item.items.filter(
               (sceneItem) =>
-                videoFilter.length === 0 || videoFilter.includes(sceneItem.scene.videoSourceId)
+                sceneItem.scene.id === editingId ||
+                videoFilter.length === 0 ||
+                videoFilter.includes(sceneItem.scene.videoSourceId)
             );
             return { ...item, items: scenesMatchingVideo };
+          }
+
+          // Priority 2: Editing Group or Has Matching Children
+          // If we are editing the group OR it has children that match the strict filter, show it.
+          // IMPORTANT: We use 'filteredScenes' here. If we are editing, we don't want to suddenly show
+          // items from other videos (pop-in effect). We preserve the current view context.
+          if (item.group.id === editingId || filteredScenes.length > 0) {
+            return { ...item, items: filteredScenes };
           }
 
           return null;
@@ -95,7 +112,6 @@
         <SceneGroup
           bind:group={item.group}
           bind:items={item.items}
-          bind:newCreated={item.new}
           dragDisabled={locked || searchQuery.trim() !== ''}
           dropFromOthersDisabled={isDraggingGroup}
           bind:editingId
@@ -112,7 +128,6 @@
         <SceneCard
           bind:scene={item.scene}
           bind:editingId
-          bind:newCreated={item.new}
           {locked}
           onDeleteScene={() => {
             deleteItem(item.id);

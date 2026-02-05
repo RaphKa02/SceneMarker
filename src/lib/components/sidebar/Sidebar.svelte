@@ -16,15 +16,26 @@
   import SceneList from './SceneList.svelte';
   import VideoFiles from './VideoFiles.svelte';
 
+  let editingId = $state<string | null>(null);
+
   onMount(() => {
     setActions();
     return () => removeActions();
   });
 
   function setActions() {
-    keyHandler.registerAction('add-scene', projectManager.addScene);
-    keyHandler.registerAction('add-group', projectManager.addGroup);
-    keyHandler.registerAction('open-video-dialog', projectManager.addVideoFile);
+    keyHandler.registerAction('add-scene', () => {
+      const id = projectManager.addScene();
+      if (id) editingId = id;
+    });
+    keyHandler.registerAction('add-group', () => {
+      const id = projectManager.addGroup();
+      if (id) editingId = id;
+    });
+    keyHandler.registerAction('open-video-dialog', async () => {
+      const id = await projectManager.addVideoFile();
+      if (id) editingId = id;
+    });
     keyHandler.registerAction('toggle-locked', toggleLockSidebar);
     keyHandler.registerAction('toggle-videofiles', toggleShowVideoFiles);
     keyHandler.registerAction('toggle-videofilter', toggleShowFilters);
@@ -99,10 +110,10 @@
   </div>
   {#if appState.uiState.showSidebar}
     {#if appState.uiState.showVideoFiles}
-      <VideoFiles {toggleShowVideoFiles} />
+      <VideoFiles {toggleShowVideoFiles} bind:editingId />
     {/if}
 
-    <SceneList {toggleLockSidebar} {toggleShowFilters} />
+    <SceneList {toggleLockSidebar} {toggleShowFilters} bind:editingId />
 
     <div class="flex justify-between p-2">
       <Button

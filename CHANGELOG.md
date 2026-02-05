@@ -91,3 +91,7 @@
 ## 1.1.4
 
 - Fix filter for scenes and groups
+
+## 1.2.0
+
+- Improve sidebar usability

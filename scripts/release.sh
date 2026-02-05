@@ -24,33 +24,9 @@ SNIPPET_FILENAME="updates.json"
 # Base URL where the files are hosted (for the Tauri JSON)
 DOWNLOAD_BASE_URL="https://scenemarker.karl-raphael.de/downloads" 
 
-# ==============================================================================
-# VERSION BUMPING
-# ==============================================================================
-
 # Extract current version from package.json
 current_version=$(grep '"version"' package.json | head -1 | sed -E 's/.*"([0-9]+\.[0-9]+\.[0-9]+)".*/\1/')
 IFS='.' read -r major minor patch <<< "$current_version"
-next_version="${major}.${minor}.$((patch + 1))"
-
-echo "Current version: $current_version"
-read -p "Enter next version [${next_version}]: " input_version
-new_version="${input_version:-$next_version}"
-
-echo "Bumping version to $new_version ..."
-echo
-echo "Please update CHANGELOG.md with the release notes for version ${new_version}."
-read -p "Press any key to continue after updating CHANGELOG.md..."
-
-# Update files
-sed -i.bak -E "s/\"version\": *\"[0-9]+\.[0-9]+\.[0-9]+\"/\"version\": \"${new_version}\"/" package.json
-rm -f package.json.bak
-
-sed -i.bak -E "s/^version *= *\"[0-9]+\.[0-9]+\.[0-9]+\"/version = \"${new_version}\"/" src-tauri/Cargo.toml
-rm -f src-tauri/Cargo.toml.bak
-
-sed -i.bak -E "s|(version-)[0-9]+\.[0-9]+\.[0-9]+(-blue)|\1${new_version}\2|" README.md
-rm -f README.md.bak
 
 # ==============================================================================
 # BUILD
@@ -65,15 +41,13 @@ pnpm tauri build --ci
 # COMMIT & TAG
 # ==============================================================================
 
-git add package.json src-tauri/Cargo.toml src-tauri/Cargo.lock README.md CHANGELOG.md
-git commit -m "chore: Bump version to ${new_version}"
-git tag -a v${new_version} -m "Release v${new_version}"
+git tag -a v${current_version} -m "Release v${current_version}"
 
 echo "Renaming build artifacts..."
 pnpm rename
 
 echo "Uploading MSI files..."
-scp src-tauri/target/release/upload/SceneMarker-latest-windows-{DE,US}-x64.msi nlinux:~/docker/compose/scene-marker/web/downloads
+scp src-tauri/target/release/upload/SceneMarker-latest-windows-{DE,US}-x64.msi nlinux:~/docker/compose/scene-marker/downloads
 
 # ==============================================================================
 # UPDATE GITLAB SNIPPET
@@ -88,7 +62,7 @@ CURRENT_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 # TODO: Optionally parse CHANGELOG.md here to get real notes. 
 # For now, we use a generic note.
-RELEASE_NOTES="Update to version ${new_version}. See CHANGELOG for details."
+RELEASE_NOTES="Update to version ${current_version}. See CHANGELOG for details."
 
 if [ -f "$SIG_FILE" ]; then
     SIGNATURE=$(cat "$SIG_FILE")
@@ -100,7 +74,7 @@ if [ -f "$SIG_FILE" ]; then
     
     # 1. Generate Tauri JSON content using jq
     TAURI_JSON_CONTENT=$(jq -n \
-      --arg ver "$new_version" \
+      --arg ver "$current_version" \
       --arg notes "$RELEASE_NOTES" \
       --arg date "$CURRENT_DATE" \
       --arg sig "$SIGNATURE" \
@@ -157,4 +131,4 @@ else
 fi
 
 echo
-echo "✅ Release complete for version ${new_version}!"
+echo "✅ Release complete for version ${current_version}!"

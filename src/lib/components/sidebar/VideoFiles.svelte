@@ -10,11 +10,10 @@
 
   interface Props {
     toggleShowVideoFiles: () => void;
+    editingId: string | null;
   }
 
-  const { toggleShowVideoFiles }: Props = $props();
-
-  let editingId = $state<string | null>(null);
+  let { toggleShowVideoFiles, editingId = $bindable() }: Props = $props();
 
   function handleDeleteVideo(videoId: string, deleteScenes: boolean) {
     projectManager.deleteVideoFile(videoId, deleteScenes);
@@ -33,7 +32,10 @@
       <Button
         variant="default"
         size="icon"
-        onclick={projectManager.addVideoFile}
+        onclick={async () => {
+          const id = await projectManager.addVideoFile();
+          if (id) editingId = id;
+        }}
         title={`Fügt eine neue Videodatei hinzu (${keyHandler.getKeyCombo(
           'open-video-dialog',
           true

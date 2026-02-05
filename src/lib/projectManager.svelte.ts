@@ -131,10 +131,10 @@ class ProjectManager {
       name: getFileName(filePath),
       path: filePath,
       color: getRandomColor(),
-      new: true,
     });
 
     appState.project.activeVideoId = videoId;
+    return videoId;
   };
 
   getVideoFilePath = async () => {
@@ -174,18 +174,19 @@ class ProjectManager {
   addScene = () => {
     if (!appState.project.activeVideoId) return;
 
+    const id = crypto.randomUUID();
     this.addSceneListItem({
       type: 'scene',
-      id: crypto.randomUUID(),
+      id,
       scene: {
-        id: crypto.randomUUID(),
+        id,
         title: `Szene ${appState.sceneCount + 1}`,
         time: Math.max(0, videoPlayerState.currentTime - Number(appState.settings.shiftSceneTime)),
         videoSourceId: appState.project.activeVideoId,
       },
-      new: true,
     });
     trackEvent('scene_created');
+    return id;
   };
 
   jumpToScene = async (time: number, videoSourceId: string) => {
@@ -199,18 +200,19 @@ class ProjectManager {
   };
 
   addGroup = () => {
+    const id = crypto.randomUUID();
     this.addSceneListItem({
       type: 'group',
-      id: crypto.randomUUID(),
+      id,
       group: {
-        id: crypto.randomUUID(),
+        id,
         name: `Gruppe ${appState.groupCount + 1}`,
       },
       items: [],
-      new: true,
     });
 
     trackEvent('group_created');
+    return id;
   };
 
   addSceneListItem = (item: SceneListItem) => {

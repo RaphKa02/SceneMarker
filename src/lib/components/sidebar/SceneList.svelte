@@ -20,9 +20,10 @@
   interface Props {
     toggleLockSidebar: () => void;
     toggleShowFilters: () => void;
+    editingId: string | null;
   }
 
-  const { toggleLockSidebar, toggleShowFilters }: Props = $props();
+  let { toggleLockSidebar, toggleShowFilters, editingId = $bindable() }: Props = $props();
 
   let searchQuery = $state('');
   let videoFilter = $state<string[]>([]);
@@ -41,7 +42,10 @@
         <Button
           variant="default"
           size="icon"
-          onclick={projectManager.addScene}
+          onclick={() => {
+            const id = projectManager.addScene();
+            if (id) editingId = id;
+          }}
           title={`Fügt eine neue Szene hinzu (${keyHandler.getKeyCombo('add-scene', true)})`}
           use={[[tutorialElement, { id: 'add-scene-btn' }]]}
         >
@@ -50,7 +54,10 @@
         <Button
           variant="outline"
           size="icon"
-          onclick={projectManager.addGroup}
+          onclick={() => {
+            const id = projectManager.addGroup();
+            if (id) editingId = id;
+          }}
           title={`Erstellt einen neuen Ordner (${keyHandler.getKeyCombo('add-group', true)})`}
           use={[[tutorialElement, { id: 'add-group-btn' }]]}
         >
@@ -136,5 +143,6 @@
     locked={appState.uiState.lockSidebar}
     {searchQuery}
     {videoFilter}
+    bind:editingId
   />
 </div>

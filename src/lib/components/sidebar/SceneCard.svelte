@@ -12,29 +12,22 @@
   import Pencil from '@lucide/svelte/icons/pencil';
   import Trash from '@lucide/svelte/icons/trash';
   import { onMount, tick } from 'svelte';
+  import EditModeInput from './EditModeInput.svelte';
 
   interface Props {
     scene: Scene;
     editingId: string | null;
     locked: boolean;
-    newCreated: boolean;
     onDeleteScene: () => void;
   }
 
-  let {
-    scene = $bindable(),
-    editingId = $bindable(null),
-    locked,
-    newCreated = $bindable(),
-    onDeleteScene,
-  }: Props = $props();
+  let { scene = $bindable(), editingId = $bindable(null), locked, onDeleteScene }: Props = $props();
 
   let editTitle = $state('');
   let dropdownOpen = $state(false);
   let deleteDialogOpen = $state(false);
   let dropdownAnchor = $state<HTMLElement | null>(null);
   let dialogAnchor = $state<HTMLElement | null>(null);
-  let inputRef = $state<HTMLInputElement | null>(null);
 
   const editing = $derived(editingId === scene.id);
 
@@ -42,17 +35,14 @@
     scene.videoSourceId ? appState.project.videoLibrary.get(scene.videoSourceId) : undefined
   );
 
-  onMount(() => {
-    if (newCreated) startEdit();
+  $effect(() => {
+    if (editing) {
+      editTitle = scene.title;
+    }
   });
 
-  async function startEdit() {
-    newCreated = false;
+  function startEdit() {
     editingId = scene.id;
-    editTitle = scene.title;
-    await tick();
-    inputRef?.select();
-    inputRef?.scrollIntoView({ behavior: 'smooth' });
   }
 
   function saveEdit() {
@@ -95,24 +85,7 @@
   tabindex="0"
 >
   {#if editing}
-    <div class="space-y-2">
-      <input
-        type="text"
-        bind:this={inputRef}
-        bind:value={editTitle}
-        onkeydown={(e) => {
-          if (e.key === 'Enter') saveEdit();
-          if (e.key === 'Escape') cancelEdit();
-        }}
-        class="border-border bg-input focus:border-primary w-full rounded border px-2 py-1 text-sm focus:outline-none"
-      />
-      <div class="flex gap-2">
-        <Button onclick={stopPropagation(saveEdit)} class="flex-1">Speichern</Button>
-        <Button variant="outline" onclick={stopPropagation(cancelEdit)} class="flex-1">
-          Abbrechen
-        </Button>
-      </div>
-    </div>
+    <EditModeInput bind:value={editTitle} onSave={saveEdit} onCancel={cancelEdit} />
   {:else}
     <h1
       class="text-start font-medium text-wrap transition-colors"

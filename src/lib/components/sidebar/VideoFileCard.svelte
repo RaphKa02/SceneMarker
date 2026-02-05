@@ -3,6 +3,7 @@
   import { Button } from '$components/ui/button';
   import * as Dialog from '$components/ui/dialog';
   import * as DropdownMenu from '$components/ui/dropdown-menu';
+  import * as Tooltip from '$components/ui/tooltip';
   import { trackEvent } from '$lib/analytics';
   import { appState } from '$lib/state.svelte';
   import type { VideoSource } from '$lib/types';
@@ -13,6 +14,7 @@
   import Pencil from '@lucide/svelte/icons/pencil';
   import Trash from '@lucide/svelte/icons/trash';
   import { tick } from 'svelte';
+  import EditModeInput from './EditModeInput.svelte';
 
   interface Props {
     videoSource: VideoSource;
@@ -28,8 +30,7 @@
   let deleteScenes = $state(false);
   let dropdownAnchor = $state<HTMLElement | null>(null);
   let dialogAnchor = $state<HTMLElement | null>(null);
-  let inputRef = $state<HTMLInputElement | null>(null);
-  let colorPickerOpen = $state(false || videoSource.new);
+  let colorPickerOpen = $state(false);
 
   const editing = $derived(editingId === videoSource.id);
   const isActive = $derived(appState.project.activeVideoId === videoSource.id);
@@ -49,20 +50,22 @@
     }, 0)
   );
 
+  $effect(() => {
+    if (editing) {
+      editName = videoSource.name || getFileName(videoSource.path);
+    }
+  });
+
+  function startEdit() {
+    editingId = videoSource.id;
+  }
+
   async function changeSource() {
     if (!editing) {
       appState.project.activeVideoId = videoSource.id;
       await tick();
       videoPlayerState.syncState();
     }
-  }
-
-  async function startEdit() {
-    editingId = videoSource.id;
-    editName = videoSource.name || getFileName(videoSource.path);
-    await tick();
-    inputRef?.select();
-    inputRef?.scrollIntoView({ behavior: 'smooth' });
   }
 
   function saveEdit() {
@@ -117,58 +120,59 @@
   tabindex="0"
 >
   {#if editing}
-    <div class="space-y-2">
-      <input
-        type="text"
-        bind:this={inputRef}
-        bind:value={editName}
-        onkeydown={(e) => {
-          if (e.key === 'Enter') saveEdit();
-          if (e.key === 'Escape') cancelEdit();
-        }}
-        class="border-border bg-input focus:border-primary w-full rounded border px-2 py-1 text-sm focus:outline-none"
-      />
-      <div class="flex gap-2">
-        <Button onclick={stopPropagation(saveEdit)} class="flex-1">Speichern</Button>
-        <Button variant="outline" onclick={stopPropagation(cancelEdit)} class="flex-1">
-          Abbrechen
-        </Button>
-      </div>
-    </div>
+    <EditModeInput bind:value={editName} onSave={saveEdit} onCancel={cancelEdit} />
   {:else}
     <div class="flex items-center justify-between gap-2">
-      <div class="min-w-0 flex-1">
-        <h3
-          class="truncate text-sm font-medium transition-colors"
-          ondblclick={() => {
-            startEdit();
-            trackEvent('video-file_edit-start', { source: 'dblClick' });
-          }}
-        >
-          {videoSource.name || getFileName(videoSource.path)}
-        </h3>
-        <p class="text-muted-foreground truncate text-xs" title={getDisplayPath(videoSource.path)}>
-          {getDisplayPath(videoSource.path)}
-        </p>
-      </div>
-      <div class="flex items-center gap-1">
-        {#if isActive}
-          <span
-            class="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-[10px] tracking-wide uppercase"
-          >
-            Aktiv
-          </span>
+      <div class="flex min-w-0 flex-1 items-center gap-2">
+        {#if appState.hasMultipleVideos}
+          <Tooltip.Root delayDuration={300}>
+            <Tooltip.Trigger>
+              <button
+                class="size-3 shrink-0 rounded-full border border-black/10 transition-transform hover:scale-120"
+                style="background-color: {videoSource.color}"
+                onclick={stopPropagation(() => (colorPickerOpen = true))}
+                aria-label="Farbe ändern"
+              ></button>
+            </Tooltip.Trigger>
+            <Tooltip.Content>Farbe ändern</Tooltip.Content>
+          </Tooltip.Root>
         {/if}
-        <Button
-          variant="ghost"
-          size="sm"
-          class="text-foreground px-0! opacity-0 group-focus-within/vf:opacity-100 group-hover/vf:opacity-100"
-          aria-label="Open dropdown"
-          onclick={stopPropagation(() => (dropdownOpen = true))}
-          bind:ref={dropdownAnchor}
-        >
-          <EllipsisVertical />
-        </Button>
+        <div class="min-w-0 flex-1">
+          <h3
+            class="truncate text-sm font-medium transition-colors"
+            ondblclick={() => {
+              startEdit();
+              trackEvent('video-file_edit-start', { source: 'dblClick' });
+            }}
+          >
+            {videoSource.name || getFileName(videoSource.path)}
+          </h3>
+          <p
+            class="text-muted-foreground truncate text-xs"
+            title={getDisplayPath(videoSource.path)}
+          >
+            {getDisplayPath(videoSource.path)}
+          </p>
+        </div>
+        <div class="flex items-center gap-1">
+          {#if isActive}
+            <span
+              class="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-[10px] tracking-wide uppercase"
+            >
+              Aktiv
+            </span>
+          {/if}
+          <Button
+            variant="ghost"
+            size="sm"
+            class="text-foreground px-0! opacity-0 group-focus-within/vf:opacity-100 group-hover/vf:opacity-100"
+            aria-label="Open dropdown"
+            onclick={stopPropagation(() => (dropdownOpen = true))}
+            bind:ref={dropdownAnchor}
+          >
+            <EllipsisVertical />
+          </Button>
+        </div>
       </div>
     </div>
   {/if}
@@ -245,8 +249,6 @@
 
 <ColorPicker
   bind:open={colorPickerOpen}
-  bind:value={
-    () => videoSource.color, (v) => (videoSource = { ...videoSource, color: v, new: false })
-  }
+  bind:value={() => videoSource.color, (v) => (videoSource = { ...videoSource, color: v })}
   filename={videoSource.name}
 />

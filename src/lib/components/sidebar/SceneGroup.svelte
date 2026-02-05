@@ -10,9 +10,9 @@
   import EllipsisVertical from '@lucide/svelte/icons/ellipsis-vertical';
   import Pencil from '@lucide/svelte/icons/pencil';
   import Trash from '@lucide/svelte/icons/trash';
-  import { onMount, tick } from 'svelte';
   import { dndzone, type DndEvent } from 'svelte-dnd-action';
   import { flip } from 'svelte/animate';
+  import EditModeInput from './EditModeInput.svelte';
 
   interface Props {
     group: Group;
@@ -20,7 +20,6 @@
     dragDisabled: boolean;
     editingId: string | null;
     dropFromOthersDisabled: boolean;
-    newCreated: boolean;
     onDeleteScene: (id: string) => void;
     onDeleteGroup: () => void;
   }
@@ -31,7 +30,6 @@
     dragDisabled,
     editingId = $bindable(null),
     dropFromOthersDisabled,
-    newCreated = $bindable(),
     onDeleteScene,
     onDeleteGroup,
   }: Props = $props();
@@ -42,21 +40,17 @@
   let deleteDialogOpen = $state(false);
   let dropdownAnchor = $state<HTMLElement | null>(null);
   let dialogAnchor = $state<HTMLElement | null>(null);
-  let inputRef = $state<HTMLInputElement | null>(null);
 
   const isEditGroup = $derived(editingId === group.id);
 
-  onMount(() => {
-    if (newCreated) startEdit();
+  $effect(() => {
+    if (isEditGroup) {
+      editGroupName = group.name;
+    }
   });
 
-  async function startEdit() {
-    newCreated = false;
+  function startEdit() {
     editingId = group.id;
-    editGroupName = group.name;
-    await tick();
-    inputRef?.select();
-    inputRef?.scrollIntoView({ behavior: 'smooth' });
   }
 
   function saveEdit() {
@@ -85,24 +79,7 @@
   class="group/sg border-border hover:shadow-primary/10 space-y-3 rounded-xl border px-3 py-2 shadow-lg shadow-black/20 transition-all"
 >
   {#if isEditGroup}
-    <div class="space-y-2">
-      <input
-        type="text"
-        bind:this={inputRef}
-        bind:value={editGroupName}
-        onkeydown={(e) => {
-          if (e.key === 'Enter') saveEdit();
-          if (e.key === 'Escape') cancelEdit();
-        }}
-        class="border-border bg-input focus:border-primary w-full rounded border px-2 py-1 text-sm focus:outline-none"
-      />
-      <div class="flex gap-2">
-        <Button onclick={stopPropagation(saveEdit)} class="flex-1">Speichern</Button>
-        <Button variant="outline" onclick={stopPropagation(cancelEdit)} class="flex-1">
-          Abbrechen
-        </Button>
-      </div>
-    </div>
+    <EditModeInput bind:value={editGroupName} onSave={saveEdit} onCancel={cancelEdit} />
   {:else}
     <h1
       class="font-medium text-wrap transition-colors"
@@ -155,7 +132,6 @@
         <div id={item.id} animate:flip={{ duration: 300 }}>
           <SceneCard
             bind:editingId
-            bind:newCreated={item.new}
             locked={dragDisabled}
             bind:scene={item.scene}
             onDeleteScene={() => onDeleteScene(item.id)}
