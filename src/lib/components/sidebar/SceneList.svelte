@@ -7,10 +7,10 @@
   import { projectManager } from '$lib/projectManager.svelte';
   import { appState } from '$lib/state.svelte';
   import { tutorialElement } from '$lib/tutorial.svelte';
-  import ChevronDown from '@lucide/svelte/icons/chevron-down';
-  import ChevronUp from '@lucide/svelte/icons/chevron-up';
   import CircleCheck from '@lucide/svelte/icons/circle-check';
   import FolderPlus from '@lucide/svelte/icons/folder-plus';
+  import ListFilter from '@lucide/svelte/icons/list-filter';
+  import ListFilterPlus from '@lucide/svelte/icons/list-filter-plus';
   import Lock from '@lucide/svelte/icons/lock';
   import LockOpen from '@lucide/svelte/icons/lock-open';
   import Plus from '@lucide/svelte/icons/plus';
@@ -29,7 +29,7 @@
   let videoFilter = $state<string[]>([]);
 </script>
 
-<div class="space-y-2 p-2">
+<div class="space-y-2 px-2 pt-4 pb-2">
   <div class="flex items-center justify-between">
     <h3 class="text-lg font-semibold">
       Szenen
@@ -85,9 +85,9 @@
         use={[[tutorialElement, { id: 'toggle-filter-btn' }]]}
       >
         {#if appState.uiState.showFilter}
-          <ChevronUp />
-        {:else}
-          <ChevronDown />
+          <ListFilter/>
+          {:else}
+          <ListFilterPlus/>
         {/if}
       </Button>
     </div>
@@ -132,6 +132,9 @@
             <span class="truncate">{videoSource.name}</span>
           </ToggleGroup.Item>
         {/each}
+        {#if videoFilter.length > 0}
+          <Button variant="ghost" size="icon" class="text-muted-foreground size-4 ml-2" onclick={()=>videoFilter=[]}><X/></Button>
+        {/if}
       </ToggleGroup.Root>
     {/if}
   {/if}

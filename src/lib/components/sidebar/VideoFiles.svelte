@@ -20,7 +20,7 @@
   }
 </script>
 
-<div class="p-2">
+<div class="px-2 py-4">
   <div class="flex items-center justify-between">
     <h3 class="text-lg font-semibold">
       Videodateien
@@ -29,21 +29,6 @@
       </span>
     </h3>
     <div class="flex gap-2">
-      <Button
-        variant="default"
-        size="icon"
-        onclick={async () => {
-          const id = await projectManager.addVideoFile();
-          if (id) editingId = id;
-        }}
-        title={`Fügt eine neue Videodatei hinzu (${keyHandler.getKeyCombo(
-          'open-video-dialog',
-          true
-        )})`}
-        use={[[tutorialElement, { id: 'add-video-btn' }]]}
-      >
-        <Plus />
-      </Button>
       <Button
         variant="outline"
         size="icon"
@@ -71,6 +56,15 @@
           onDeleteVideo={(deleteScenes) => handleDeleteVideo(id, deleteScenes)}
         />
       {/each}
-    {/if}
+      {/if}
+        <Button variant="ghost" class="w-full border border-dashed mt-2" onclick={async () => {
+          const id = await projectManager.addVideoFile();
+          if (id) editingId = id;
+        }}
+        title={`Fügt eine neue Videodatei hinzu (${keyHandler.getKeyCombo(
+          'open-video-dialog',
+          true
+        )})`}
+        use={[[tutorialElement, { id: 'add-video-btn' }]]}> <Plus/> Video hinzufügen</Button>
   </div>
 </div>

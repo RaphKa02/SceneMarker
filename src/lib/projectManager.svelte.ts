@@ -134,6 +134,7 @@ class ProjectManager {
     });
 
     appState.project.activeVideoId = videoId;
+    appState.uiState.showVideoFiles = true;
     return videoId;
   };
 
