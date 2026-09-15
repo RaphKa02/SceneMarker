@@ -95,3 +95,7 @@
 ## 1.2.0
 
 - Improve sidebar usability
+
+## 1.2.1
+
+- Fix reconnect video
