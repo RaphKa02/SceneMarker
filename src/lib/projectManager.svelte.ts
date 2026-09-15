@@ -169,7 +169,7 @@ class ProjectManager {
     if (!filePath) return;
 
     const video = appState.project.videoLibrary.get(videoId);
-    if (video) video.path = filePath;
+    if (video) appState.project.videoLibrary.set(videoId, { ...video, path: filePath });
   };
 
   addScene = () => {

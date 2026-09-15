@@ -85,9 +85,9 @@
         use={[[tutorialElement, { id: 'toggle-filter-btn' }]]}
       >
         {#if appState.uiState.showFilter}
-          <ListFilter/>
-          {:else}
-          <ListFilterPlus/>
+          <ListFilter />
+        {:else}
+          <ListFilterPlus />
         {/if}
       </Button>
     </div>
@@ -133,7 +133,14 @@
           </ToggleGroup.Item>
         {/each}
         {#if videoFilter.length > 0}
-          <Button variant="ghost" size="icon" class="text-muted-foreground size-4 ml-2" onclick={()=>videoFilter=[]}><X/></Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            class="text-muted-foreground ml-2 size-4"
+            onclick={() => (videoFilter = [])}
+          >
+            <X />
+          </Button>
         {/if}
       </ToggleGroup.Root>
     {/if}

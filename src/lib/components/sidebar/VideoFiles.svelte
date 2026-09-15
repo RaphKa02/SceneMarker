@@ -56,15 +56,21 @@
           onDeleteVideo={(deleteScenes) => handleDeleteVideo(id, deleteScenes)}
         />
       {/each}
-      {/if}
-        <Button variant="ghost" class="w-full border border-dashed mt-2" onclick={async () => {
-          const id = await projectManager.addVideoFile();
-          if (id) editingId = id;
-        }}
-        title={`Fügt eine neue Videodatei hinzu (${keyHandler.getKeyCombo(
-          'open-video-dialog',
-          true
-        )})`}
-        use={[[tutorialElement, { id: 'add-video-btn' }]]}> <Plus/> Video hinzufügen</Button>
+    {/if}
+    <Button
+      variant="ghost"
+      class="mt-2 w-full border border-dashed"
+      onclick={async () => {
+        const id = await projectManager.addVideoFile();
+        if (id) editingId = id;
+      }}
+      title={`Fügt eine neue Videodatei hinzu (${keyHandler.getKeyCombo(
+        'open-video-dialog',
+        true
+      )})`}
+      use={[[tutorialElement, { id: 'add-video-btn' }]]}
+    >
+      <Plus /> Video hinzufügen
+    </Button>
   </div>
 </div>
